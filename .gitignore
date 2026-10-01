@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.env*
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# large originals kept out of the deployed bundle
+source-assets

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I measure worlds — Sarthak Sahai (video)</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{--ink:#06070b;--ink2:#0b0d13;--ink3:#10131b;--bone:#ece7db;--dim:#a3a094;--mute:#7c7a73;--laser:#ff5b2e;--ice:#a9d8ff;--paper:#e9e5da}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;color:var(--bone);font-family:'Archivo',system-ui,sans-serif}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:var(--ink);overflow:hidden;font-variation-settings:"wdth" 100}
+#bg{position:absolute;inset:0}
+#vig{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 45%,transparent 40%,rgba(6,7,11,.75) 100%),linear-gradient(to bottom,rgba(6,7,11,.8),transparent 14%,transparent 80%,rgba(6,7,11,.9))}
+.mono{font-family:'Fragment Mono',monospace;text-transform:uppercase;letter-spacing:.14em;font-size:22px;color:var(--dim)}
+.disp{font-family:'Archivo';font-weight:650;font-variation-settings:"wdth" 116;text-transform:uppercase;letter-spacing:-.035em;line-height:.9}
+.ser{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;letter-spacing:-.01em}
+.laser{color:var(--laser)}
+.abs{position:absolute}
+.a{opacity:0}
+#brand{position:absolute;left:100px;top:44px;font-size:30px;font-weight:700;font-variation-settings:"wdth" 116;letter-spacing:-.01em;z-index:30}
+#brand i{font-family:'Instrument Serif';font-weight:400;margin-left:8px;font-size:36px}
+#tag{position:absolute;right:100px;top:50px;z-index:30;text-align:right}
+#tag b{color:var(--laser);font-weight:400}
+#tc{position:absolute;right:100px;bottom:34px;z-index:30;font-size:20px}
+#prog{position:absolute;left:100px;right:100px;bottom:22px;height:2px;background:rgba(236,231,219,.14);z-index:30}
+#prog b{position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(0);background:var(--laser)}
+.tick{position:absolute;width:26px;height:26px;border:0 solid rgba(236,231,219,.55);z-index:30}
+#caps{position:absolute;left:0;right:0;bottom:82px;height:130px;z-index:40}
+.cap{position:absolute;left:260px;right:260px;bottom:0;text-align:center;font-size:42px;font-weight:500;line-height:1.28;letter-spacing:-.01em;opacity:0;text-shadow:0 2px 18px #000,0 0 6px #000}
+.cap span{color:rgba(236,231,219,.38)}
+#wipe{position:absolute;top:-10px;bottom:-10px;width:3px;left:-10px;background:var(--laser);box-shadow:0 0 40px 8px rgba(255,91,46,.55);z-index:50;opacity:0}
+.sc{position:absolute;inset:0;opacity:0;z-index:10}
+.ticks{position:absolute;border:1px solid rgba(236,231,219,.16)}
+.chip{display:inline-block;border:1px solid rgba(236,231,219,.3);border-radius:999px;padding:10px 22px;font-family:'Fragment Mono';font-size:22px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);background:rgba(6,7,11,.6)}
+.card{position:absolute;background:rgba(11,13,19,.86);border:1px solid rgba(236,231,219,.16);backdrop-filter:blur(2px)}
+.stat .v{font-weight:650;font-variation-settings:"wdth" 116;font-size:100px;line-height:.9;letter-spacing:-.03em}
+.stat .v u{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-size:.45em;text-decoration:none;color:var(--dim);margin-left:8px}
+.stat .l{margin-top:12px;font-size:19px}
+#ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:14px;align-items:center;padding:12px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85));z-index:99;font-family:'Fragment Mono',monospace;font-size:13px;color:#cfcabd;text-transform:uppercase;letter-spacing:.1em}
+#ctrl button{background:#ff5b2e;color:#06070b;border:0;border-radius:99px;padding:8px 18px;font:inherit;cursor:pointer}
+#ctrl input{flex:1}
+#start{position:fixed;inset:0;z-index:98;display:grid;place-items:center;background:rgba(6,7,11,.55);cursor:pointer}
+#start div{border:1px solid rgba(236,231,219,.5);border-radius:99px;padding:20px 40px;font-family:'Fragment Mono';letter-spacing:.14em;text-transform:uppercase;font-size:18px;color:#ece7db;background:rgba(6,7,11,.75)}
+body.render #ctrl,body.render #start{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+
+  <div id="brand">SARTHAK<i>Sahai</i></div>
+  <div id="tag" class="mono"><b id="tagn">01</b> / 07 — <span id="tagl">Identity</span></div>
+  <div id="tc" class="mono">00:00</div>
+  <div id="prog"><b></b></div>
+  <i class="tick" style="left:36px;top:36px;border-left-width:1px;border-top-width:1px"></i>
+  <i class="tick" style="right:36px;top:36px;border-right-width:1px;border-top-width:1px"></i>
+  <i class="tick" style="left:36px;bottom:36px;border-left-width:1px;border-bottom-width:1px"></i>
+  <i class="tick" style="right:36px;bottom:36px;border-right-width:1px;border-bottom-width:1px"></i>
+
+  <!-- ───────── 1 · IDENTITY ───────── -->
+  <section class="sc" id="s1">
+    <div class="abs disp" id="nm" style="left:100px;top:210px;font-size:196px;white-space:nowrap">
+      <div class="nl">SARTHAK</div><div class="nl">SAHAI</div>
+    </div>
+    <div class="abs mono a" id="s1sub" style="left:104px;top:640px;font-size:26px;color:var(--bone)">Space Engineering · York University · Class of 2027</div>
+    <div class="abs disp a" id="s1hook" style="left:100px;top:730px;font-size:128px;text-transform:none;letter-spacing:-.03em;font-weight:600">I measure <span class="ser laser" style="color:var(--bone)">worlds<span class="laser">.</span></span></div>
+    <div class="abs a" id="s1fig" style="left:1230px;top:150px;width:520px;height:650px">
+      <canvas id="pc" width="520" height="650" class="abs" style="left:0;top:0"></canvas>
+      <img id="ph" src="/assets/about/headshot.jpg" class="abs" style="left:0;top:0;width:520px;height:650px;object-fit:cover;object-position:50% 28%;filter:grayscale(.2) contrast(1.05);clip-path:inset(0 0 100% 0)">
+      <div class="ticks" style="inset:-1px"></div>
+      <div id="scanline" class="abs" style="left:-20px;right:-20px;top:0;height:3px;background:var(--laser);box-shadow:0 0 30px 6px rgba(255,91,46,.6);opacity:0"></div>
+      <div class="mono abs" style="left:0;top:668px;font-size:18px">Fig. 01 — Sarthak Sahai (he/him)</div>
+    </div>
+  </section>
+
+  <!-- ───────── 2 · DISCIPLINES ───────── -->
+  <section class="sc" id="s2">
+    <svg class="abs" id="craft" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke="rgba(236,231,219,.75)" stroke-width="2.5" style="left:0;top:0">
+      <g id="orbitG" transform="rotate(-14 660 520)">
+        <ellipse id="orbit" cx="660" cy="520" rx="500" ry="150" stroke="rgba(169,216,255,.55)" stroke-dasharray="4 8"/>
+        <circle id="sat" r="9" fill="#ff5b2e" stroke="none"/>
+      </g>
+      <g id="panL" stroke="rgba(169,216,255,.8)"><rect x="170" y="470" width="300" height="110"/><path d="M245 470v110M320 470v110M395 470v110M170 525h300"/></g>
+      <g id="panR" stroke="rgba(169,216,255,.8)"><rect x="850" y="430" width="300" height="110"/><path d="M925 430v110M1000 430v110M1075 430v110M850 485h300"/></g>
+      <path d="M470 525h40M810 480h40"/>
+      <g id="bus"><rect x="510" y="440" width="300" height="190"/><rect x="565" y="395" width="300" height="190"/><path d="M510 440l55-45M810 440l55-45M510 630l55-45M810 630l55-45"/></g>
+      <g id="dish"><path d="M700 395v-45"/><path d="M660 320q40 40 80 0" stroke-width="3"/><path d="M742 300q22 10 22 30M758 285q38 18 38 48" stroke="rgba(255,91,46,.8)"/></g>
+      <g id="thr"><path d="M630 630l-22 50h104l-22-50z"/></g>
+      <g id="pcb" stroke-width="2"><rect x="540" y="500" width="60" height="50"/><path d="M552 500v-14M570 500v-14M588 500v-14M552 550v14M570 550v14M588 550v14M540 515h-14M540 535h-14M600 515h14M600 535h14"/><rect x="556" y="514" width="28" height="22"/></g>
+      <text id="code" x="660" y="545" font-family="Fragment Mono" font-size="42" fill="rgba(236,231,219,.85)" stroke="none">&lt;/&gt;</text>
+      <g id="links" stroke="#ff5b2e" stroke-width="2.5">
+        <path id="lk1" d="M300 335V380H470L520 440"/>
+        <path id="lk2" d="M400 650H470L560 550"/>
+        <path id="lk3" d="M1230 312H1000L852 440"/>
+        <path id="lk4" d="M1230 622H1180L1130 480"/>
+        <path id="lk5" d="M690 205V318"/>
+      </g>
+    </svg>
+    <div class="abs a lab" id="l1" style="left:100px;top:250px"><div class="mono laser">01</div><div class="disp" style="font-size:60px">Structures</div></div>
+    <div class="abs a lab" id="l2" style="left:100px;top:590px"><div class="mono laser">02</div><div class="disp" style="font-size:60px">Electronics</div></div>
+    <div class="abs a lab" id="l3" style="left:1250px;top:250px"><div class="mono laser">03</div><div class="disp" style="font-size:60px">Software</div></div>
+    <div class="abs a lab" id="l4" style="left:1250px;top:560px"><div class="mono laser">04</div><div class="disp" style="font-size:60px">Orbits</div></div>
+    <div class="abs a lab" id="l5" style="left:520px;top:110px"><div class="mono laser">05</div><div class="disp" style="font-size:60px">Operations</div></div>
+    <div class="card a" id="c1" style="left:100px;top:770px;width:800px;height:110px;padding:24px 32px">
+      <div class="mono laser" style="font-size:18px">Certificate</div><div style="font-size:36px;font-weight:600;font-variation-settings:'wdth' 108;margin-top:6px">Cross-Disciplinary Mechatronics</div></div>
+    <div class="card a" id="c2" style="left:940px;top:770px;width:880px;height:110px;padding:24px 32px">
+      <div class="mono laser" style="font-size:18px">Certificate · Bergeron Entrepreneurs in Science &amp; Technology</div><div style="font-size:36px;font-weight:600;font-variation-settings:'wdth' 108;margin-top:6px">Entrepreneurship &amp; Intellectual Property Law</div></div>
+  </section>
+
+  <!-- ───────── 3 · BETWEEN ───────── -->
+  <section class="sc" id="s3">
+    <svg class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" style="left:0;top:0" id="venn"></svg>
+    <div class="abs" id="s3t" style="left:0;right:0;top:400px;text-align:center">
+      <div class="disp ser a" id="s3a" style="font-size:150px;line-height:1.02">The answer lives</div>
+      <div class="disp a" id="s3b" style="font-size:150px;line-height:1.02;margin-top:6px">between <span class="ser laser">disciplines.</span></div>
+    </div>
+  </section>
+
+  <!-- ───────── 4 · CSA ───────── -->
+  <section class="sc" id="s4">
+    <div class="abs a" id="s4h" style="left:100px;top:120px"><div class="mono laser" style="font-size:22px">Active · Internship · May 2026 —</div>
+      <div class="disp" style="font-size:66px;margin-top:10px">Canadian Space Agency</div>
+      <div class="mono" style="font-size:24px;margin-top:14px;color:var(--bone)">Student Systems Engineering Intern · Pushbroom LiDAR</div></div>
+    <div class="abs a" id="s4p" style="left:100px;top:330px;width:1000px;height:480px">
+      <canvas id="sw" width="1000" height="480" class="abs" style="left:0;top:0;background:rgba(11,13,19,.85)"></canvas>
+      <div class="ticks" style="inset:-1px"></div>
+      <div class="mono abs" style="left:18px;top:14px;font-size:17px">Swath · SICK LMS111-10100 · 270° · pushbroom</div>
+      <div class="mono abs" id="swcfg" style="right:18px;top:14px;font-size:17px;color:var(--laser)">25 Hz · 0.5°</div>
+      <div id="ob1" class="mono abs a" style="font-size:16px;color:var(--laser)">3 cm</div>
+      <div id="ob2" class="mono abs a" style="font-size:16px;color:var(--laser)">3 cm</div>
+      <div id="ob3" class="mono abs a" style="font-size:16px;color:var(--laser)">3 cm</div>
+    </div>
+    <div class="abs stat a" id="st1" style="left:1260px;top:140px;width:210px"><div class="v">1<u>cm</u></div><div class="l mono">ranging accuracy</div></div>
+    <div class="abs stat a" id="st2" style="left:1470px;top:140px;width:210px"><div class="v">3<u>cm</u></div><div class="l mono">min. obstacle</div></div>
+    <div class="abs stat a" id="st3" style="left:1680px;top:140px;width:200px"><div class="v">20<u>m</u></div><div class="l mono">max. range</div></div>
+    <div class="abs a" id="trl" style="left:1180px;top:350px;width:680px"><div class="mono" style="color:var(--bone)">Technology readiness level</div>
+      <div style="display:flex;gap:6px;margin-top:14px" id="trlbars"></div><div class="mono laser" style="margin-top:12px">TRL ↑ · off-world navigation &amp; landing</div></div>
+    <div class="abs a" id="art" style="left:1180px;top:520px"><span class="chip" style="border-color:var(--laser);color:var(--laser)">NASA Artemis 4 · surface mapping</span></div>
+    <div class="abs a" id="grid" style="left:1180px;top:610px;width:680px">
+      <div style="display:grid;grid-template-columns:150px 1fr 1fr;gap:2px;background:rgba(236,231,219,.14)" id="g22"></div></div>
+    <div class="abs a" id="flow" style="left:100px;top:850px;width:1760px;display:flex;align-items:center;gap:22px">
+      <div class="chip" style="border-style:dashed;color:var(--mute);text-decoration:line-through;text-decoration-color:var(--laser);text-decoration-thickness:3px" id="ext">External contractor</div>
+      <div class="mono laser" style="font-size:30px">→</div>
+      <div class="chip" id="f1">01 Scanning module</div><div class="mono" style="font-size:26px">›</div>
+      <div class="chip" id="f2">02 Python pipeline</div><div class="mono" style="font-size:26px">›</div>
+      <div class="chip" id="f3">03 Point-cloud viewer</div>
+      <div class="mono laser" style="margin-left:auto;font-size:22px" id="inh">built in-house</div></div>
+  </section>
+
+  <!-- ───────── 5 · LEADERSHIP ───────── -->
+  <section class="sc" id="s5">
+    <div class="abs a mono laser" id="s5h" style="left:100px;top:130px;font-size:26px">At York University · B.Eng. Space Engineering · 2021 — 2027</div>
+    <div class="card a" id="r1" style="left:100px;top:210px;width:560px;height:640px;padding:36px">
+      <div class="mono laser">President · Sep 2024 — May 2026</div>
+      <div class="disp" style="font-size:66px;margin-top:14px">Steel Bridge</div>
+      <svg width="488" height="150" viewBox="0 0 488 150" fill="none" stroke="rgba(236,231,219,.85)" stroke-width="3" style="margin-top:18px" id="truss"></svg>
+      <div style="display:flex;gap:40px;margin-top:20px">
+        <div class="stat"><div class="v" id="tm" style="font-size:84px">6</div><div class="l mono" style="font-size:16px">team members</div></div>
+        <div class="stat"><div class="v" id="fund" style="font-size:84px">$0</div><div class="l mono" style="font-size:16px">sponsorship</div></div></div>
+      <div class="mono" style="font-size:17px;margin-top:20px;color:var(--mute)">20 ft competition bridge · national competition, Moncton NB</div></div>
+    <div class="card a" id="r2" style="left:700px;top:210px;width:560px;height:640px;padding:36px">
+      <div class="mono laser">Steering &amp; Braking Lead · Sep 2024 — Feb 2025</div>
+      <div class="disp" style="font-size:66px;margin-top:14px">Concrete Toboggan</div>
+      <svg width="488" height="150" viewBox="0 0 488 150" fill="none" stroke="rgba(236,231,219,.85)" stroke-width="3" style="margin-top:18px"><path d="M0 40L488 140" stroke="rgba(169,216,255,.7)"/><g id="tob"><rect x="-44" y="-26" width="88" height="22" rx="4" fill="#ece7db" stroke="none"/><circle cx="-22" cy="-30" r="6" fill="#ff5b2e" stroke="none"/><path d="M-50 0h100" stroke="#ff5b2e"/></g></svg>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px"><span class="chip" id="aw1" style="opacity:0;width:max-content">★ Best New Team</span><span class="chip" id="aw2" style="opacity:0;width:max-content">★ Best Ski Design</span><span class="chip" id="aw3" style="opacity:0;width:max-content;color:var(--dim)">CP24 news feature</span></div></div>
+    <div class="card a" id="r3" style="left:1300px;top:210px;width:520px;height:640px;padding:36px">
+      <div class="mono laser">VP Student Life · Sep 2022 — Apr 2024</div>
+      <div class="disp" style="font-size:54px;margin-top:14px;line-height:.98">Lassonde Engineering Society</div>
+      <svg width="448" height="230" viewBox="0 0 448 230" style="margin-top:22px" id="net"></svg>
+      <div class="mono" style="font-size:17px;margin-top:10px;color:var(--mute)">Student life for Lassonde engineers</div></div>
+  </section>
+
+  <!-- ───────── 6 · PROJECTS ───────── -->
+  <section class="sc" id="s6">
+    <div class="abs a mono laser" id="s6h" style="left:100px;top:130px;font-size:26px">In class &amp; on teams · mission design to hardware</div>
+    <div class="card a" id="p1" style="left:100px;top:210px;width:410px;height:610px;padding:30px"><div class="mono laser">Capstone · Project &amp; Systems Lead</div><div class="disp" style="font-size:58px;margin-top:10px;white-space:nowrap">NOVA</div>
+      <svg width="350" height="270" viewBox="0 0 350 270" style="margin-top:6px"><g stroke="rgba(236,231,219,.5)"><path d="M20 10v250M12 260h330" /></g><g id="bal"><path d="M0 -34C-18 -34 -26 -20 -26 -8C-26 10 -10 22 0 28C10 22 26 10 26 -8C26 -20 18 -34 0 -34Z" fill="#ece7db"/><path d="M0 28v20" stroke="#ece7db"/><rect x="-7" y="48" width="14" height="10" fill="#ff5b2e"/></g></svg>
+      <div class="stat"><div class="v" id="km" style="font-size:90px">0<u>km</u></div></div><div class="mono" style="font-size:17px;margin-top:6px">RSOnar III balloon · 3.7 W of 4 W · &lt; 500 g</div></div>
+    <div class="card a" id="p2" style="left:540px;top:210px;width:410px;height:610px;padding:30px"><div class="mono laser">Systems &amp; Payload Lead</div><div class="disp" style="font-size:58px;margin-top:10px;white-space:nowrap">ROUTE-M</div>
+      <canvas id="globe" width="350" height="270" style="margin-top:6px"></canvas>
+      <div class="stat"><div class="v" style="font-size:90px">≤1<u>m</u></div></div><div class="mono" style="font-size:17px;margin-top:6px">Mars mapping · 2 satellites · 7-yr life</div></div>
+    <div class="card a" id="p3" style="left:980px;top:210px;width:410px;height:610px;padding:30px"><div class="mono laser">Project &amp; Payload Lead</div><div class="disp" style="font-size:58px;margin-top:10px;white-space:nowrap">OSCAR</div>
+      <svg width="350" height="270" viewBox="0 0 350 270" style="margin-top:6px" fill="none"><path id="spec" stroke="#ff5b2e" stroke-width="4" d=""/><path d="M20 250H340M20 250V20" stroke="rgba(236,231,219,.4)"/><rect x="20" y="256" width="320" height="8" fill="url(#rb)"/><defs><linearGradient id="rb"><stop offset="0" stop-color="#6a4bff"/><stop offset=".3" stop-color="#2aa4ff"/><stop offset=".5" stop-color="#3ddc84"/><stop offset=".75" stop-color="#ffd23d"/><stop offset="1" stop-color="#ff4b3d"/></linearGradient></defs></svg>
+      <div class="stat"><div class="v" style="font-size:90px">5<u>engineers</u></div></div><div class="mono" style="font-size:17px;margin-top:6px">Ocean-health spectrometer mission</div></div>
+    <div class="card a" id="p4" style="left:1420px;top:210px;width:400px;height:610px;padding:30px"><div class="mono laser">Team Lead · Active</div><div class="disp" style="font-size:58px;margin-top:10px;white-space:nowrap">Sparrow</div>
+      <svg width="340" height="270" viewBox="0 0 340 270" style="margin-top:6px" fill="none" stroke="rgba(236,231,219,.85)" stroke-width="3"><rect x="50" y="150" width="240" height="46" rx="10"/><circle cx="82" cy="214" r="30"/><circle cx="258" cy="214" r="30"/><path d="M170 150V84"/><rect x="140" y="52" width="60" height="32" rx="4" fill="#ece7db" stroke="none" id="mast"/><circle cx="170" cy="68" r="7" fill="#ff5b2e" stroke="none"/></svg>
+      <div class="stat"><div class="v" id="nine" style="font-size:90px">9<u>engineers</u></div></div><div class="mono" style="font-size:17px;margin-top:6px">≈ $1,500 target · any sensor, no rework</div></div>
+  </section>
+
+  <!-- ───────── 7 · NEXT ───────── -->
+  <section class="sc" id="s7">
+    <div class="abs a" id="s7a" style="left:0;right:0;top:250px;text-align:center"><div class="mono laser" style="font-size:26px">What's next</div>
+      <div class="disp" style="font-size:150px;margin-top:26px;line-height:.98">Let's build something<br>that <span class="ser">leaves Earth.</span></div></div>
+    <div class="abs a" id="s7w" style="left:0;right:0;top:700px;text-align:center;font-size:30px" ><span class="mono" style="font-size:26px;color:var(--bone)">New worlds · Protecting ours · Science &amp; industries we can't yet imagine</span></div>
+    <div class="abs a" id="s7c" style="left:0;right:0;top:790px;text-align:center"><span class="chip" style="font-size:30px;padding:16px 34px">sarthaksahai2014@gmail.com</span><span class="chip" style="font-size:30px;padding:16px 34px;margin-left:22px">linkedin.com/in/sarthak-sahai</span></div>
+  </section>
+
+  <div id="caps"></div>
+  <div id="wipe"></div>
+</div>
+
+<div id="start"><div>▶ Play with sound</div></div>
+<div id="ctrl"><button id="pp">Play</button><span id="ct">00:00</span><input id="scrub" type="range" min="0" max="1000" value="0"><span id="dt">00:00</span><span style="opacity:.6">space = play/pause · ←/→ = ±5 s</span></div>
+<audio id="aud" src="narration.mp3" preload="auto"></audio>
+<script src="gsap.min.js"></script>
+<script src="timing.js"></script>
+<script src="video.js"></script>
+</body>
+</html>
