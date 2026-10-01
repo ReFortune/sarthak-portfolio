@@ -69,6 +69,9 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       getLenis()?.scrollTo(0, { immediate: true, force: true });
       ScrollTrigger.refresh();
       await sleep(140);
+      // Lenis re-measures the page on a 250 ms debounce, so just after the swap it still holds the old
+      // page's height and would clamp the hash target to it. Measure now.
+      getLenis()?.resize();
       if (url.hash) scrollToTarget(url.hash, { immediate: true, force: true });
 
       const reveal = gsap.timeline();

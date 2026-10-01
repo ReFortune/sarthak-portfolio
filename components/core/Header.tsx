@@ -108,6 +108,12 @@ export default function Header() {
             label="Home"
             aria-label="Sarthak Sahai — home"
             className="pointer-events-auto group flex items-baseline gap-2 leading-none"
+            onClick={(e) => {
+              // The logo sits above the open menu; send it through the same close-then-go path as "Home".
+              if (!open || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+              e.preventDefault();
+              choose("top");
+            }}
           >
             <span className="h-display text-[0.95rem] tracking-[-0.01em] md:text-[1.05rem]">Sarthak</span>
             <span className="serif text-[1.2rem] md:text-[1.35rem]">Sahai</span>

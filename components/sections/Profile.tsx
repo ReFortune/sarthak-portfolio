@@ -91,7 +91,7 @@ export default function Profile() {
           </Reveal>
           <Reveal className="lg:col-span-8" delay={0.1}>
             <VideoCard
-              src="/assets/about/about-me-720.mp4"
+              src="/assets/about/about-me.mp4"
               poster="/assets/about/about-me-poster.webp"
               title="In my own words"
               caption="Fig. 02 — A short video introduction"

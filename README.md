@@ -50,7 +50,6 @@ lib/                      terrain.ts (procedural planet), gsap.ts, scroll.ts, st
 public/
   resume.pdf              the September 2026 résumé
   assets/                 figures, reports, video (paths are referenced from data/ and components/case/)
-source-assets/            large originals kept out of the deployed bundle (git-ignored)
 ```
 
 ## Updating content
@@ -78,7 +77,7 @@ terrain-following and the cursor's live range/elevation readout.
 - Every render loop pauses off-screen (`IntersectionObserver`) and when the tab is hidden.
 - Point clouds are updated with partial buffer ranges; `dpr` is capped (1.5 on touch / low-core devices, 2 elsewhere) and point counts scale down on small screens.
 - Images are `next/image` (AVIF/WebP); figures were extracted from the reports and re-encoded as WebP (≈1.7 MB total).
-- The 2:13 intro video is click-to-play with a poster, so its 11 MB never loads unprompted.
+- The 2:13 intro video is click-to-play with a poster, so its ~51 MB (1080p) never loads unprompted.
 
 ## Accessibility
 
