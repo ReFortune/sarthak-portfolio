@@ -42,7 +42,7 @@ components/
   hero/                   Hero, TerrainCanvas (React shell), terrainScene.ts (three.js)
   sections/               one file per home-page section
     lab/                  pushbroom-LiDAR simulator (PushbroomLab + pushbroomScene)
-    projects/             sticky project stack + the six interactive "instruments"
+    projects/             sticky project stack, its jump index, and the six interactive "instruments"
       visuals/planner*    the route-planning demo: plannerEngine (terrain, sunlight, searches), plannerRender (canvas), PlannerVisual (UI)
     research/             TransitLab (HAT-P-18 b)
     leadership/           TrussBridge, TeamGrowth

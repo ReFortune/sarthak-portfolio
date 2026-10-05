@@ -21,7 +21,7 @@ export function CaseSection({
   id?: string;
 }) {
   return (
-    <section id={id} className="relative py-20 md:py-32">
+    <section id={id} data-chapter={label} data-chapter-n={n} className="relative py-20 md:py-32">
       <div className="wrap">
         <Reveal className="flex items-center justify-between border-t border-bone/15 pt-4">
           <p className="label label-strong flex items-center gap-3">

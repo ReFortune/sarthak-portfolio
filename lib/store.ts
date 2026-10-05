@@ -48,6 +48,9 @@ export const sectionStore = createStore<{ id: string; index: number; progress: n
   progress: 0,
 });
 
+/** Which chapter of a case study owns the viewport (for the header + HUD on /projects/*). `null` = above the first chapter. */
+export const chapterStore = createStore<{ n: string; label: string; index: number; total: number } | null>(null);
+
 /** Text the custom cursor shows while over an instrument (e.g. the hero terrain readout). */
 export const cursorReadout = createStore<string>("");
 

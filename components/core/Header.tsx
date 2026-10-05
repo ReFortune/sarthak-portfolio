@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "@/lib/gsap";
-import { menuStore, sectionStore, useStore } from "@/lib/store";
+import { chapterStore, menuStore, sectionStore, useStore } from "@/lib/store";
 import { profile, sections } from "@/data/profile";
 import { scrollToTarget, startScroll, stopScroll } from "@/lib/scroll";
 import { TLink, useTransition } from "./Transition";
@@ -18,6 +18,7 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 export default function Header() {
   const open = useStore(menuStore);
   const section = useStore(sectionStore);
+  const chapter = useStore(chapterStore);
   const pathname = usePathname();
   const isHome = pathname === "/";
   const { go } = useTransition();
@@ -130,6 +131,11 @@ export default function Header() {
                 <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-white align-middle [animation:blink_1.6s_infinite]" />
                 Scan active
               </>
+            ) : chapter ? (
+              <>
+                <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-white align-middle" />
+                {chapter.n} — {chapter.label}
+              </>
             ) : (
               "Case study"
             )}
@@ -191,14 +197,14 @@ export default function Header() {
                         e.preventDefault();
                         choose(s.id);
                       }}
-                      className="menu-link group flex items-baseline gap-4 py-1.5 md:gap-6"
+                      className="menu-link group relative flex items-baseline gap-4 py-1.5 md:gap-6"
                       aria-current={current?.id === s.id ? "true" : undefined}
                     >
                       <span className="label w-7 shrink-0 tnum">{s.n}</span>
-                      <span className="h-display text-[clamp(2.1rem,7.2vw,6.5rem)] leading-[0.95] transition-[padding,color] duration-500 ease-out group-hover:pl-4 group-hover:text-laser md:group-hover:pl-8">
+                      <span className="h-display text-[clamp(2.1rem,min(7.2vw,calc((100svh-340px)/9.5)),6.5rem)] leading-[0.95] transition-[padding,color] duration-500 ease-out group-hover:pl-4 group-hover:text-laser md:group-hover:pl-8">
                         {s.label}
                       </span>
-                      <span className="menu-hint label ml-auto hidden max-w-[16rem] text-right opacity-0 transition-opacity duration-300 group-hover:opacity-100 xl:block">
+                      <span className="menu-hint label ml-auto hidden max-w-[16rem] text-right opacity-0 transition-opacity duration-300 group-hover:opacity-100 xl:absolute xl:right-0 xl:top-1/2 xl:ml-0 xl:block xl:-translate-y-1/2">
                         {s.hint}
                       </span>
                     </a>

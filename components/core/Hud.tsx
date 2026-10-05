@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { ScrollTrigger } from "@/lib/gsap";
-import { sectionStore, useStore } from "@/lib/store";
+import { chapterStore, sectionStore, useStore } from "@/lib/store";
 import { profile, sections } from "@/data/profile";
 
 /**
@@ -15,6 +15,7 @@ export default function Hud() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const section = useStore(sectionStore);
+  const chapter = useStore(chapterStore);
   const bar = useRef<HTMLSpanElement>(null);
   const pct = useRef<HTMLSpanElement>(null);
   const clock = useRef<HTMLSpanElement>(null);
@@ -45,6 +46,36 @@ export default function Hud() {
     return () => {
       window.clearTimeout(t);
       triggers.forEach((tr) => tr.kill());
+    };
+  }, [isHome, pathname]);
+
+  /* active-chapter tracking (case studies) */
+  useEffect(() => {
+    chapterStore.set(null);
+    if (isHome) return;
+    const triggers: ScrollTrigger[] = [];
+    const t = window.setTimeout(() => {
+      const els = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
+      els.forEach((el, index) => {
+        triggers.push(
+          ScrollTrigger.create({
+            trigger: el,
+            start: "top 55%",
+            end: "bottom 55%",
+            onToggle: (self) => {
+              if (self.isActive) chapterStore.set({ n: el.dataset.chapterN ?? String(index + 1).padStart(2, "0"), label: el.dataset.chapter ?? "", index, total: els.length });
+            },
+            // above the first chapter and below the last one, the page is just "a case study" again
+            onLeaveBack: () => index === 0 && chapterStore.set(null),
+            onLeave: () => index === els.length - 1 && chapterStore.set(null),
+          })
+        );
+      });
+    }, 400);
+    return () => {
+      window.clearTimeout(t);
+      triggers.forEach((tr) => tr.kill());
+      chapterStore.set(null);
     };
   }, [isHome, pathname]);
 
@@ -106,7 +137,7 @@ export default function Hud() {
       {/* bottom-left: where am I */}
       <div className="absolute bottom-5 left-[var(--gutter)] hidden items-center gap-4 md:flex">
         <span className="label !text-white/80 tnum">
-          {isHome && s ? `${s.n} / 09 — ${s.label}` : isHome ? "00 / 09" : "Case study"}
+          {isHome && s ? `${s.n} / 09 — ${s.label}` : isHome ? "00 / 09" : chapter ? `${chapter.n} / ${String(chapter.total).padStart(2, "0")} — ${chapter.label}` : "Case study"}
         </span>
         <span className="relative block h-px w-24 bg-white/20">
           <span ref={bar} className="absolute inset-0 origin-left scale-x-0 bg-white" />
