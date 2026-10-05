@@ -1,8 +1,9 @@
 # Sarthak Sahai — Space Engineering Portfolio
 
-A scroll-driven portfolio built around one idea: **I measure worlds.** The hero is a live LiDAR point cloud of a procedural
-planetary surface that you can paint with your cursor; every section after it is an interactive instrument built from real
-project data — a pushbroom-LiDAR simulator, a Mars coverage globe, an ascent profile, a transit-photometry lab, a rover route-planning demo and more.
+A scroll-driven portfolio built around one idea: **I map worlds & plan the path.** The hero is a live LiDAR point cloud of a procedural
+planetary surface that you can paint with your cursor, with a route planned across it in real time; every section after it is an interactive
+instrument built from real project data — a pushbroom-LiDAR simulator, a Mars coverage globe, an ascent profile, a transit-photometry lab, a rover route-planning demo and more.
+The headline lives in one place (`profile.hook` in `data/profile.ts`) and feeds the hero, the page title and the social-card text.
 
 Content is sourced from the **September 2026 résumé** (`public/resume.pdf`) and the project reports in `public/assets/`.
 The one addition is **MPT (Mission Planning Tool)**, a second project of my CSA internship. It is not on that résumé yet and is described in general terms only. It appears as its own project inside the CSA entry under Experience (findings, the live planner, a link onward) and as a card with a case study under Projects; the interactive planner is an original demo on synthetic terrain, not CSA software or data.
@@ -25,6 +26,7 @@ npm run dev        # http://localhost:3000
 npm run build && npm start
 npm run typecheck
 npm run verify:planner   # checks the route-planning demo's engine against an independent reference (~20 s)
+npm run verify:route     # checks the hero's route planner against an independent Dijkstra (~1 s)
 ```
 
 ## Where things live
@@ -39,7 +41,7 @@ app/
   sitemap.ts, robots.ts, not-found.tsx
 components/
   core/                   Providers, SmoothScroll, Preloader, Header + menu, Hud, Cursor, Transition
-  hero/                   Hero, TerrainCanvas (React shell), terrainScene.ts (three.js)
+  hero/                   Hero, TerrainCanvas (React shell), terrainScene.ts (three.js), routePlanner.ts (the planner behind the route)
   sections/               one file per home-page section
     lab/                  pushbroom-LiDAR simulator (PushbroomLab + pushbroomScene)
     projects/             sticky project stack, its jump index, and the six interactive "instruments"
@@ -49,7 +51,7 @@ components/
   case/                   case-study pages + charts + figure lightbox
   ui/                     Reveal, SplitReveal, ScrubText, ScanFrame, CountUp, Marquee, Magnetic…
 data/                     ALL content — edit these, not components
-scripts/                  verify-planner.mjs — correctness checks for the route-planning demo's engine
+scripts/                  verify-planner.mjs, verify-route.mjs — correctness checks for the route-planning demo's engine and the hero's route planner
 lib/                      terrain.ts (procedural planet), gsap.ts, scroll.ts, store.ts, hooks.ts, math.ts
 public/
   resume.pdf              the September 2026 résumé
@@ -77,11 +79,19 @@ ever draws ~120k static points. A pushbroom scan plane colours points as they ar
 terrain (world-space trail) and a click sends a ranging ping. The same height function drives the scan-fan ray hits, the camera's
 terrain-following and the cursor's live range/elevation readout.
 
+`routePlanner.ts` plans over that same height field. Once a second it searches a 31 m × 110 m window of 1 m cells ahead of the rover for the
+cheapest forward route (distance, multiplied up on slopes, with a margin around steep crater walls and a small pull towards the previous plan),
+by dynamic programming — exact, because every move goes forward — then rounds the corners and resamples it onto the surface. The scene draws
+the first ~76 m as a glowing ribbon with waypoint diamonds, glides between successive plans, and outlines the ground steeper than the 25° limit
+in orange (marching squares over the same risk map). The readout beside the LiDAR panel shows the planner's latest plan, straight from the scene.
+The terrain is synthetic and the limits are illustrative: it demonstrates the technique, and says nothing about any real mission or tool.
+
 ## Performance
 
 - Initial JS ≈ **295 KB gzipped**. three.js is *not* in it — every 3D scene is dynamically imported when its section nears the viewport.
 - Every render loop pauses off-screen (`IntersectionObserver`) and when the tab is hidden.
 - Point clouds are updated with partial buffer ranges; `dpr` is capped (1.5 on touch / low-core devices, 2 elsewhere) and point counts scale down on small screens.
+- The hero's route planner takes about a millisecond per plan, once a second (terrain rows are cached a few at a time; the plan itself allocates almost nothing), and pauses with the scene when the hero is off-screen.
 - Images are `next/image` (AVIF/WebP); figures were extracted from the reports and re-encoded as WebP (≈1.7 MB total).
 - The 2:13 intro video is click-to-play with a poster, so its 11 MB (720p) never loads unprompted.
 

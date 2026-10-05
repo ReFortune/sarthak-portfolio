@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useGsap } from "@/lib/hooks";
-import { bootStore, useStore } from "@/lib/store";
+import { bootStore, planReadout, useStore } from "@/lib/store";
 import { profile } from "@/data/profile";
 import { lerp, smoothstep } from "@/lib/math";
 import TerrainCanvas from "./TerrainCanvas";
@@ -62,18 +62,32 @@ export default function Hero() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
+    const BASE_W = 112;
+    const BASE_WGHT = 650;
+
+    // Measure at the resting width and weight: the intro (and the cursor) squeeze and swell the glyphs, and a fit taken
+    // mid-animation (a returning visitor's fonts-ready lands during the intro) would size the name for the squeezed state.
     const fit = () => {
+      const held = chars.map((c) => [c.style.getPropertyValue("--w"), c.style.getPropertyValue("--g")] as const);
+      for (const c of chars) {
+        c.style.setProperty("--w", String(BASE_W));
+        c.style.setProperty("--g", String(BASE_WGHT));
+      }
       name.style.fontSize = "100px";
       const w = name.getBoundingClientRect().width;
       if (w > 0) name.style.fontSize = `${(100 * wrap.clientWidth * 0.972) / w}px`;
+      chars.forEach((c, i) => {
+        for (const [k, v] of [["--w", held[i][0]], ["--g", held[i][1]]] as const) {
+          if (v) c.style.setProperty(k, v);
+          else c.style.removeProperty(k);
+        }
+      });
     };
     fit();
     document.fonts?.ready.then(fit);
     const ro = new ResizeObserver(fit);
     ro.observe(wrap);
 
-    const BASE_W = 112;
-    const BASE_WGHT = 650;
     const cur = chars.map(() => ({ w: BASE_W, g: BASE_WGHT }));
     const tgt = chars.map(() => ({ w: BASE_W, g: BASE_WGHT }));
     let active = false;
@@ -182,15 +196,15 @@ export default function Hero() {
         </div>
 
         <div className="grid items-start gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-7 xl:col-span-6">
+          <div className="lg:col-span-7">
             <p className="hero-fade label mb-6 sm:mb-8">
               <span className="mr-3 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-laser align-middle [animation:blink_1.4s_infinite]" />
               {profile.role} <span className="text-bone-mute">·</span> {profile.org}
             </p>
 
-            <SplitReveal as="p" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.5rem,6.4vw,6.75rem)] !leading-[0.92]">
-              I measure<br />
-              <span className="serif text-[1.08em] normal-case tracking-[-0.02em]">worlds<span className="text-laser">.</span></span>
+            <SplitReveal as="p" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.1rem,5.5vw,5.9rem)] !leading-[0.92]">
+              {profile.hook.lead}<br />
+              <span className="serif text-[1.08em] normal-case tracking-[-0.02em]">{profile.hook.accent}<span className="text-laser">.</span></span>
             </SplitReveal>
 
             <p className="hero-fade lede mt-6 max-w-[34rem] sm:mt-8">{profile.tagline}</p>
@@ -272,15 +286,18 @@ function ScanPanel({ className = "" }: { className?: string }) {
           ))}
         </div>
       </div>
-      <dl className="space-y-2.5">
+      <dl className="space-y-2.5 [@media(max-height:820px)]:space-y-1.5">
         {[
-          ["Scan rate", <span key="r" ref={rateEl}>{m.rate} Hz</span>],
-          ["Angular increment", <span key="i" ref={incEl}>{m.inc.toFixed(2)}°</span>],
-          ["Field of view", "270°"],
-          ["Max range", "20.0 m"],
-          ["Points acquired", <span key="p" ref={total} className="text-laser">1,204,331</span>],
-        ].map(([k, v]) => (
-          <div key={String(k)} className="flex items-baseline justify-between gap-6 border-b border-bone/10 pb-2.5 last:border-0 last:pb-0">
+          ["Scan rate", <span key="r" ref={rateEl}>{m.rate} Hz</span>, true],
+          ["Angular increment", <span key="i" ref={incEl}>{m.inc.toFixed(2)}°</span>, true],
+          ["Field of view", "270°", false],
+          ["Max range", "20.0 m", false],
+          ["Points acquired", <span key="p" ref={total} className="text-laser">1,204,331</span>, true],
+        ].map(([k, v, always]) => (
+          <div
+            key={String(k)}
+            className={`${always ? "flex" : "hidden [@media(min-height:900px)]:flex"} items-baseline justify-between gap-6 border-b border-bone/10 pb-2.5 last:border-0 last:pb-0 [@media(max-height:820px)]:pb-1.5`}
+          >
             <dt className="label">{k}</dt>
             <dd className="mono tnum text-[0.8rem] tracking-wide text-bone">{v}</dd>
           </div>
@@ -288,6 +305,36 @@ function ScanPanel({ className = "" }: { className?: string }) {
       </dl>
       <a href="#experience" className="label link mt-4 inline-block !text-bone-dim hover:!text-bone">
         Run the trade study →
+      </a>
+      <RoutePanel />
+    </div>
+  );
+}
+
+/** The planner that draws the route across the terrain: its latest plan, straight from the scene. */
+function RoutePanel() {
+  const plan = useStore(planReadout);
+  const rows: [string, string][] = [
+    ["Route", plan ? `${Math.round(plan.length)} m` : "—"],
+    ["Steepest cell", plan ? `${Math.round(plan.maxSlope)}° · limit ${plan.limit}°` : "—"],
+    ["Planned in", plan ? `${plan.ms < 10 ? plan.ms.toFixed(1) : Math.round(plan.ms)} ms` : "—"],
+  ];
+  return (
+    <div className="mt-5 border-t border-bone/15 pt-4 [@media(max-height:820px)]:mt-3.5 [@media(max-height:820px)]:pt-3">
+      <p className="label label-strong mb-3 flex items-center gap-2 [@media(max-height:820px)]:mb-2">
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-ice [animation:blink_1.6s_infinite]" />
+        Route planner · live
+      </p>
+      <dl className="space-y-2 [@media(max-height:820px)]:space-y-1.5">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-baseline justify-between gap-6 border-b border-bone/10 pb-2 last:border-0 last:pb-0 [@media(max-height:820px)]:pb-1.5">
+            <dt className="label">{k}</dt>
+            <dd className="mono tnum text-[0.8rem] tracking-wide text-bone">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <a href="#mission-planner" className="label link mt-4 inline-block !text-bone-dim hover:!text-bone [@media(max-height:820px)]:mt-3">
+        Try the planner →
       </a>
     </div>
   );

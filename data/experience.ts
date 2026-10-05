@@ -28,7 +28,7 @@ export type Stream = ProjectIntro & {
   id: string;
   findings: Finding[];
   /** An interactive instrument shown below the findings. */
-  demo?: { kind: VisualKind; eyebrow: string; title: string; accent: string; lede: string; frameLabel: string };
+  demo?: { id: string; kind: VisualKind; eyebrow: string; title: string; accent: string; lede: string; frameLabel: string };
   link?: { href: string; label: string; code: string };
 };
 
@@ -116,6 +116,7 @@ export const experience: Experience[] = [
           },
         ],
         demo: {
+          id: "mission-planner",
           kind: "planner",
           eyebrow: "Interactive · illustrative",
           title: "Fastest or",

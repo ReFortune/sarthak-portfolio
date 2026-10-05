@@ -54,5 +54,20 @@ export const chapterStore = createStore<{ n: string; label: string; index: numbe
 /** Text the custom cursor shows while over an instrument (e.g. the hero terrain readout). */
 export const cursorReadout = createStore<string>("");
 
+/** What the hero's route planner reports each time it plans (null until the first plan). */
+export type PlanReadout = {
+  /** 3-D length of the drawn route (m). */
+  length: number;
+  /** Steepest step along it (degrees) and the limit the planner works to. */
+  maxSlope: number;
+  limit: number;
+  /** Cells of steep ground in the stretch ahead. */
+  blocked: number;
+  /** Time spent planning (ms) and plans made so far. */
+  ms: number;
+  plans: number;
+};
+export const planReadout = createStore<PlanReadout | null>(null);
+
 /** Menu overlay open state. */
 export const menuStore = createStore<boolean>(false);

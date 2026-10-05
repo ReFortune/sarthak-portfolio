@@ -25,10 +25,12 @@ const mono = Fragment_Mono({
   weight: "400",
 });
 
+const pageTitle = `${profile.name} — ${profile.hookLine}`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Sarthak Sahai — I measure worlds",
+    default: pageTitle,
     template: "%s — Sarthak Sahai",
   },
   description: profile.description,
@@ -40,12 +42,13 @@ export const metadata: Metadata = {
     "systems engineering",
     "Canadian Space Agency",
     "LiDAR",
+    "path planning",
     "York University",
     "mission design",
     "portfolio",
   ],
   openGraph: {
-    title: "Sarthak Sahai — I measure worlds",
+    title: pageTitle,
     description: profile.description,
     type: "website",
     siteName: "Sarthak Sahai",
@@ -53,7 +56,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sarthak Sahai — I measure worlds",
+    title: pageTitle,
     description: profile.description,
   },
   robots: { index: true, follow: true },
@@ -75,7 +78,7 @@ const personJsonLd = {
   alumniOf: { "@type": "CollegeOrUniversity", name: profile.school },
   email: `mailto:${profile.email}`,
   sameAs: [profile.linkedin],
-  knowsAbout: ["Systems engineering", "Space engineering", "LiDAR", "Mission design", "Payload design"],
+  knowsAbout: ["Systems engineering", "Space engineering", "LiDAR", "Path planning", "Mission design", "Payload design"],
 };
 
 /** Runs before first paint: returning visitors / reduced-motion skip the boot sequence without a flash. */

@@ -239,28 +239,32 @@ function ProjectBlock({ stream, n }: { stream: Stream; n: string }) {
       </div>
 
       {stream.demo && (
-        <Reveal className="mt-20 md:mt-28" y={60}>
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="label mb-3">{stream.demo.eyebrow}</p>
-              <h5 className="h-title text-[clamp(1.7rem,3.4vw,3rem)]">
-                {stream.demo.title} <span className="serif">{stream.demo.accent}</span>
-              </h5>
-            </div>
-            <p className="lede max-w-xl !text-[1rem]">{stream.demo.lede}</p>
-          </div>
-          <div className="window ticks relative h-[min(88svh,54rem)] min-h-[46rem]">
-            <div className="absolute inset-0 flex flex-col">
-              <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
-                <p className="label label-strong">{stream.demo.frameLabel}</p>
-                <p className="label hidden sm:block">Interactive</p>
+        <>
+          {/* the hero links here: an unanimated marker just above the demo, so the scroll lands with the heading clear of the header */}
+          <div id={stream.demo.id} aria-hidden="true" className="pointer-events-none -mb-24 h-24" />
+          <Reveal className="mt-20 md:mt-28" y={60}>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="label mb-3">{stream.demo.eyebrow}</p>
+                <h5 className="h-title text-[clamp(1.7rem,3.4vw,3rem)]">
+                  {stream.demo.title} <span className="serif">{stream.demo.accent}</span>
+                </h5>
               </div>
-              <div className="relative flex-1 overflow-hidden">
-                <Visual kind={stream.demo.kind} />
+              <p className="lede max-w-xl !text-[1rem]">{stream.demo.lede}</p>
+            </div>
+            <div className="window ticks relative h-[min(88svh,54rem)] min-h-[46rem]">
+              <div className="absolute inset-0 flex flex-col">
+                <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
+                  <p className="label label-strong">{stream.demo.frameLabel}</p>
+                  <p className="label hidden sm:block">Interactive</p>
+                </div>
+                <div className="relative flex-1 overflow-hidden">
+                  <Visual kind={stream.demo.kind} />
+                </div>
               </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </>
       )}
 
       {stream.link && (

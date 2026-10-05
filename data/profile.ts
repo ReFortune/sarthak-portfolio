@@ -1,6 +1,9 @@
+/** The hero's headline: set in two lines, the second in the serif italic. Also the page title. */
+const hook = { lead: "I map worlds", accent: "& plan the path" } as const;
+
 /**
  * Single source of truth for identity + site-wide copy.
- * Facts come from the September 2026 résumé (public/resume.pdf).
+ * Facts come from the September 2026 résumé (public/resume.pdf); the path-planning line comes from the CSA mission-planning work, described in general terms.
  */
 export const profile = {
   name: "Sarthak Sahai",
@@ -23,13 +26,14 @@ export const profile = {
     edition: "September 2026",
     pages: 2,
   },
-  hook: "I measure worlds.",
+  hook,
+  hookLine: `${hook.lead} ${hook.accent}`,
   tagline:
-    "Space systems engineer in training. I build the instruments, payloads and teams that let us see other worlds clearly.",
+    "Space systems engineer in training. I build the instruments, payloads, software and teams that let us see other worlds clearly, and find the way across them.",
   seeking:
     "Open to opportunities in aerospace systems engineering, mission design, AIT and space technology.",
   description:
-    "Sarthak Sahai — Space Engineering student at York University and Student Systems Engineering Intern at the Canadian Space Agency. LiDAR surface mapping, stratospheric payloads, Mars mission design and exoplanet photometry.",
+    "Sarthak Sahai — Space Engineering student at York University and Student Systems Engineering Intern at the Canadian Space Agency. LiDAR surface mapping, path planning, stratospheric payloads, Mars mission design and exoplanet photometry.",
 } as const;
 
 /** Headline figures that scroll past as a ticker. Every value is lifted from the résumé. */

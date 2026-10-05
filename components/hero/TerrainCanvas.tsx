@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { bootStore, cursorReadout, markBoot } from "@/lib/store";
+import { bootStore, cursorReadout, markBoot, planReadout } from "@/lib/store";
 import type { TerrainScene } from "./terrainScene";
 
 type Props = {
@@ -55,6 +55,7 @@ export default function TerrainCanvas({ scrollRef, className, introReady = true,
         scene = mod.createTerrainScene(canvas, {
           reduced,
           lowPower,
+          onPlan: (p) => planReadout.set(p),
           onReady: () => {
             markBoot("scene");
             canvas.style.opacity = "1";
@@ -145,6 +146,7 @@ export default function TerrainCanvas({ scrollRef, className, introReady = true,
       cleanups.forEach((fn) => fn());
       scene?.dispose();
       sceneRef.current = null;
+      planReadout.set(null);
       if (window.__terrain === scene) delete window.__terrain;
       canvas.remove();
     };

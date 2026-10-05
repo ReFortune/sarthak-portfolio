@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { corridorX, heightAt, normalAt, raycast, rampColor, hash2, type Hit } from "@/lib/terrain";
 import { clamp, damp, lerp, smoothstep } from "@/lib/math";
+import { RoutePlanner, createPlan, type RoutePlan } from "./routePlanner";
+import type { PlanReadout } from "@/lib/store";
 
 /* ─────────────────────────────────────────────────────────────────────────
    HERO TERRAIN — a LiDAR point cloud of a procedural planetary surface.
@@ -12,6 +14,9 @@ import { clamp, damp, lerp, smoothstep } from "@/lib/math";
      (dense, coloured by elevation/relief, with a hot after-glow); ahead of it only
      a sparse prior map is visible.
    · The pointer paints with light (world-space trail), a click sends a ranging ping.
+   · A route planner works on the same height field: once a second it plans the way
+     across the terrain ahead (avoiding steep crater walls) and the route is drawn over
+     the cloud, with the steep ground it avoids outlined in orange.
    ───────────────────────────────────────────────────────────────────────── */
 
 const BETA = 0.3; // scan-plane pitch below horizontal (rad)
@@ -158,6 +163,120 @@ const STAR_FRAG = /* glsl */ `
   }
 `;
 
+/* ── route: a ribbon along the planned path (constant width on screen), a dark stroke under it, diamonds at the
+      waypoints, and a contour around the steep ground it avoids ── */
+
+const RIB_VERT = /* glsl */ `
+  uniform vec2 uRes;
+  uniform float uWidth, uGain, uTime, uReveal, uShow, uSinB, uFlow;
+  uniform vec3 uHead, uN;
+  attribute vec3 aPrev, aNext;
+  attribute float aSide, aS;
+  varying float vSide, vA, vPulse;
+
+  vec2 toPx(vec4 c) { return c.xy / c.w * uRes * 0.5; }
+
+  void main() {
+    mat4 mvp = projectionMatrix * modelViewMatrix;
+    vec4 c0 = mvp * vec4(position, 1.0);
+    vec2 p0 = toPx(c0);
+    vec2 d = toPx(mvp * vec4(aNext, 1.0)) - toPx(mvp * vec4(aPrev, 1.0));
+    d = dot(d, d) > 1e-4 ? normalize(d) : vec2(0.0, 1.0);
+    vec2 px = p0 + vec2(-d.y, d.x) * aSide * uWidth * 0.5;
+    gl_Position = vec4(px / (uRes * 0.5) * c0.w, c0.z, c0.w);
+
+    float depth = max(0.25, -(modelViewMatrix * vec4(position, 1.0)).z);
+    float near = smoothstep(6.0, 13.0, depth);
+    float rev = 1.0 - smoothstep(uReveal - 9.0, uReveal, aS);   // the plan sweeps out from the rover when it first appears
+    float far = 1.0 - smoothstep(uShow * 0.62, uShow, aS);      // and thins out with distance
+    float s = dot(position - uHead, uN) / uSinB;
+    float committed = 1.0 - smoothstep(-0.2, 0.5, s);           // brighter where the ground is already scanned
+    float wave = 0.5 + 0.5 * sin((aS - uTime * 9.0) * 0.8);     // a pulse streams along the route, away from the rover
+    vPulse = wave * wave * wave * uFlow;
+    vSide = aSide;
+    vA = near * rev * far * uGain * (0.8 + 0.2 * committed) * (0.72 + 0.28 * vPulse);
+  }
+`;
+const RIB_FRAG = /* glsl */ `
+  varying float vSide, vA, vPulse;
+  void main() {
+    float e = abs(vSide);
+    float core = smoothstep(0.32, 0.0, e);
+    float body = exp(-e * e * 4.0);
+    float a = vA * (1.0 * core + 0.5 * body);
+    if (a < 0.004) discard;
+    vec3 col = mix(vec3(0.66, 0.9, 1.0), vec3(1.0, 0.97, 0.92), clamp(vPulse * 0.9 + core * 0.35, 0.0, 1.0));
+    gl_FragColor = vec4(col, a);
+  }
+`;
+const RIB_UNDER_FRAG = /* glsl */ `
+  varying float vSide, vA, vPulse;
+  void main() {
+    float a = vA * 0.7 * smoothstep(1.0, 0.25, abs(vSide));
+    if (a < 0.004) discard;
+    gl_FragColor = vec4(0.024, 0.027, 0.043, a);
+  }
+`;
+
+const WAY_VERT = /* glsl */ `
+  uniform float uPxPerUnit, uGain, uReveal, uShow, uSize;
+  attribute float aS;
+  varying float vA;
+  void main() {
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    float depth = max(0.25, -mv.z);
+    gl_Position = projectionMatrix * mv;
+    float rev = 1.0 - smoothstep(uReveal - 6.0, uReveal, aS);
+    float far = 1.0 - smoothstep(uShow * 0.7, uShow, aS);
+    vA = rev * far * uGain;
+    gl_PointSize = clamp(uSize * uPxPerUnit / depth, 7.0, 26.0);
+  }
+`;
+const WAY_FRAG = /* glsl */ `
+  varying float vA;
+  void main() {
+    vec2 c = (gl_PointCoord - 0.5) * 2.0;
+    float d = abs(c.x) + abs(c.y);                       // a diamond
+    float ring = smoothstep(1.0, 0.88, d) - smoothstep(0.62, 0.5, d);
+    float dot_ = smoothstep(0.26, 0.12, d);
+    float a = vA * (0.95 * ring + 0.8 * dot_);
+    if (a < 0.004) discard;
+    gl_FragColor = vec4(0.86, 0.97, 1.0, a);
+  }
+`;
+
+const CON_VERT = /* glsl */ `
+  uniform vec2 uRes;
+  uniform float uWidth, uGain, uCamZ, uConGain;
+  attribute vec3 aPrev, aNext;
+  attribute float aSide, aW;
+  varying float vSide, vA;
+
+  vec2 toPx(vec4 c) { return c.xy / c.w * uRes * 0.5; }
+
+  void main() {
+    mat4 mvp = projectionMatrix * modelViewMatrix;
+    vec4 c0 = mvp * vec4(position, 1.0);
+    vec2 d = toPx(mvp * vec4(aNext, 1.0)) - toPx(mvp * vec4(aPrev, 1.0));
+    d = dot(d, d) > 1e-4 ? normalize(d) : vec2(0.0, 1.0);
+    vec2 px = toPx(c0) + vec2(-d.y, d.x) * aSide * uWidth * 0.5;
+    gl_Position = vec4(px / (uRes * 0.5) * c0.w, c0.z, c0.w);
+
+    float rz = position.z - uCamZ;
+    float fade = smoothstep(8.0, 16.0, rz) * (1.0 - smoothstep(44.0, 78.0, rz));
+    vSide = aSide;
+    vA = fade * uConGain * uGain * (0.15 + 0.7 * aW);
+  }
+`;
+const CON_FRAG = /* glsl */ `
+  varying float vSide, vA;
+  void main() {
+    float a = vA * smoothstep(1.0, 0.0, abs(vSide));
+    if (a < 0.004) discard;
+    gl_FragColor = vec4(1.0, 0.36, 0.18, a);
+  }
+`;
+
 /* ── layer: a ring buffer of rows that follow the camera ─────────────────── */
 
 class Layer {
@@ -292,6 +411,7 @@ export type TerrainOptions = {
   reduced: boolean;
   lowPower: boolean;
   onReady?: () => void;
+  onPlan?: (p: PlanReadout) => void;
 };
 
 export type Readout = { range: number; elev: number; bearing: number };
@@ -304,11 +424,13 @@ export type TerrainScene = {
   setVisible(v: boolean): void;
   intro(): void;
   getReadout(): Readout | null;
+  getPlan(): PlanReadout | null;
   getPointCount(): number;
   dispose(): void;
   /** Dev/testing hook: advance the simulation by `seconds` without rendering. */
   debugAdvance(seconds: number): void;
   debugInfo(): unknown;
+  debugRoute(): unknown;
   debugLayers(mask: boolean[]): void;
 };
 
@@ -435,6 +557,117 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
   emitter.frustumCulled = false;
   scene.add(emitter);
 
+  /* ── route planner: the route, a dark halo under it, waypoint diamonds, and outlines of the steep ground it avoids ── */
+  const planner = new RoutePlanner({
+    step: opts.lowPower ? 0.8 : 0.5,
+    ahead: opts.lowPower ? 96 : 110,
+    show: opts.lowPower ? 70 : 76,
+  });
+  const plan: RoutePlan = createPlan(opts.lowPower ? 200 : 400, opts.lowPower ? 320 : 700);
+  const MAXP = plan.s.length;
+  const MAXS = plan.seg.length / 7;
+  const MAXW = plan.wayK.length;
+  const routePos = new Float32Array(MAXP * 3); // the route as shown (x, y, z per vertex)
+  const routeFrom = new Float32Array(MAXP * 3);
+  const routeTo = new Float32Array(MAXP * 3);
+  // ribbon: two vertices per route vertex (one on each side), each knowing its neighbours so the shader can find the direction
+  const ribPos = new Float32Array(MAXP * 2 * 3);
+  const ribPrev = new Float32Array(MAXP * 2 * 3);
+  const ribNext = new Float32Array(MAXP * 2 * 3);
+  const ribSide = new Float32Array(MAXP * 2);
+  const ribS = new Float32Array(MAXP * 2);
+  const ribIdx = new Uint16Array((MAXP - 1) * 6);
+  for (let k = 0; k < MAXP; k++) {
+    ribSide[2 * k] = -1;
+    ribSide[2 * k + 1] = 1;
+    if (k < MAXP - 1) {
+      const o = k * 6, a = 2 * k;
+      ribIdx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], o);
+    }
+  }
+  const routeGeo = new THREE.BufferGeometry();
+  routeGeo.setAttribute("position", new THREE.BufferAttribute(ribPos, 3).setUsage(THREE.DynamicDrawUsage));
+  routeGeo.setAttribute("aPrev", new THREE.BufferAttribute(ribPrev, 3).setUsage(THREE.DynamicDrawUsage));
+  routeGeo.setAttribute("aNext", new THREE.BufferAttribute(ribNext, 3).setUsage(THREE.DynamicDrawUsage));
+  routeGeo.setAttribute("aSide", new THREE.BufferAttribute(ribSide, 1));
+  routeGeo.setAttribute("aS", new THREE.BufferAttribute(ribS, 1).setUsage(THREE.DynamicDrawUsage));
+  routeGeo.setIndex(new THREE.BufferAttribute(ribIdx, 1));
+  routeGeo.setDrawRange(0, 0);
+  const RU = {
+    uTime: { value: 0 },
+    uReveal: { value: 0 },
+    uShow: { value: planner.show },
+    uFlow: { value: opts.reduced ? 0 : 1 },
+    uConGain: { value: 0 },
+    uRes: { value: new THREE.Vector2(1, 1) },
+  };
+  const shared = { uPxPerUnit: U.uPxPerUnit, uGain: U.uGain, uSinB: U.uSinB, uHead: U.uHead, uN: U.uN, uCamZ: U.uCamZ, ...RU };
+  const routeMat = new THREE.ShaderMaterial({
+    vertexShader: RIB_VERT,
+    fragmentShader: RIB_FRAG,
+    uniforms: { ...shared, uWidth: { value: 10 } },
+    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  const underMat = new THREE.ShaderMaterial({
+    vertexShader: RIB_VERT,
+    fragmentShader: RIB_UNDER_FRAG,
+    uniforms: { ...shared, uWidth: { value: 16 } },
+    transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
+  });
+  const routeMesh = new THREE.Mesh(routeGeo, routeMat);
+  const routeUnder = new THREE.Mesh(routeGeo, underMat);
+  routeUnder.renderOrder = 10;
+  routeMesh.renderOrder = 11;
+
+  const wayPos = new Float32Array(MAXW * 3);
+  const wayS = new Float32Array(MAXW);
+  const wayGeo = new THREE.BufferGeometry();
+  wayGeo.setAttribute("position", new THREE.BufferAttribute(wayPos, 3).setUsage(THREE.DynamicDrawUsage));
+  wayGeo.setAttribute("aS", new THREE.BufferAttribute(wayS, 1).setUsage(THREE.DynamicDrawUsage));
+  wayGeo.setDrawRange(0, 0);
+  const wayMat = new THREE.ShaderMaterial({
+    vertexShader: WAY_VERT,
+    fragmentShader: WAY_FRAG,
+    uniforms: { ...shared, uSize: { value: 0.95 } },
+    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const wayPts = new THREE.Points(wayGeo, wayMat);
+  wayPts.renderOrder = 12;
+
+  // steep-ground contour: a short ribbon per segment (4 vertices each, both ends know the segment's direction)
+  const conPos = new Float32Array(MAXS * 4 * 3);
+  const conPrev = new Float32Array(MAXS * 4 * 3);
+  const conNext = new Float32Array(MAXS * 4 * 3);
+  const conSide = new Float32Array(MAXS * 4);
+  const conW = new Float32Array(MAXS * 4);
+  const conIdx = new Uint16Array(MAXS * 6);
+  for (let k = 0; k < MAXS; k++) {
+    const v = k * 4;
+    conSide.set([-1, 1, -1, 1], v);
+    conIdx.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6);
+  }
+  const conGeo = new THREE.BufferGeometry();
+  conGeo.setAttribute("position", new THREE.BufferAttribute(conPos, 3).setUsage(THREE.DynamicDrawUsage));
+  conGeo.setAttribute("aPrev", new THREE.BufferAttribute(conPrev, 3).setUsage(THREE.DynamicDrawUsage));
+  conGeo.setAttribute("aNext", new THREE.BufferAttribute(conNext, 3).setUsage(THREE.DynamicDrawUsage));
+  conGeo.setAttribute("aSide", new THREE.BufferAttribute(conSide, 1));
+  conGeo.setAttribute("aW", new THREE.BufferAttribute(conW, 1).setUsage(THREE.DynamicDrawUsage));
+  conGeo.setIndex(new THREE.BufferAttribute(conIdx, 1));
+  conGeo.setDrawRange(0, 0);
+  const conMat = new THREE.ShaderMaterial({
+    vertexShader: CON_VERT,
+    fragmentShader: CON_FRAG,
+    uniforms: { ...shared, uWidth: { value: 2.4 } },
+    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  const conMesh = new THREE.Mesh(conGeo, conMat);
+  conMesh.renderOrder = 9;
+
+  for (const o of [conMesh, routeUnder, routeMesh, wayPts]) {
+    o.frustumCulled = false;
+    scene.add(o);
+  }
+
   /* ── state ─────────────────────────────────────────────────────────── */
   const st = {
     t: 0,
@@ -483,6 +716,10 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
     camera.updateProjectionMatrix();
     U.uPxPerUnit.value = (h * dpr) / (2 * Math.tan((camera.fov * Math.PI) / 360));
     starU.uPx.value = dpr * (w < 700 ? 0.9 : 1.15);
+    RU.uRes.value.set(w * dpr, h * dpr);
+    routeMat.uniforms.uWidth.value = (w < 700 ? 10 : 13) * dpr;
+    underMat.uniforms.uWidth.value = (w < 700 ? 15 : 19) * dpr;
+    conMat.uniforms.uWidth.value = 2.4 * dpr;
   }
 
   /* camera rig: follows the corridor + terrain, looks ahead, pitches up with scroll */
@@ -624,6 +861,141 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
     }
   }
 
+  /* ── route planner: state + per-frame update ─────────────────────────── */
+  const route = {
+    ready: false, // terrain window cached
+    shape: false, // a route exists
+    n: 0,
+    last: -99, // sim time and rover z of the last plan
+    lastZ: -1e9,
+    morph: 1, // 0 → 1 while the route on screen glides to the new plan
+    revealT: -1, // <0 = not started; the plan sweeps out from the rover when it first appears
+    reveal: 0,
+    wayN: 0,
+    wayK: new Int32Array(MAXW),
+    readout: null as PlanReadout | null,
+  };
+  const REPLAN_S = opts.lowPower ? 1.4 : 1.0;
+  const REPLAN_M = 4;
+  const MORPH_S = 0.55;
+
+  /** Put the route on screen: positions are `from → to` by `e`; the ribbon and the waypoints follow. */
+  function writeRoute(e: number) {
+    const n = route.n;
+    for (let k = 0; k < n * 3; k++) routePos[k] = routeFrom[k] + (routeTo[k] - routeFrom[k]) * e;
+    for (let k = 0; k < n; k++) {
+      const p = k * 3;
+      const a = Math.max(0, k - 1) * 3;
+      const b = Math.min(n - 1, k + 1) * 3;
+      for (let side = 0; side < 2; side++) {
+        const o = (2 * k + side) * 3;
+        ribPos[o] = routePos[p]; ribPos[o + 1] = routePos[p + 1]; ribPos[o + 2] = routePos[p + 2];
+        ribPrev[o] = routePos[a]; ribPrev[o + 1] = routePos[a + 1]; ribPrev[o + 2] = routePos[a + 2];
+        ribNext[o] = routePos[b]; ribNext[o + 1] = routePos[b + 1]; ribNext[o + 2] = routePos[b + 2];
+      }
+    }
+    (routeGeo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+    (routeGeo.getAttribute("aPrev") as THREE.BufferAttribute).needsUpdate = true;
+    (routeGeo.getAttribute("aNext") as THREE.BufferAttribute).needsUpdate = true;
+    for (let w = 0; w < route.wayN; w++) {
+      const k = route.wayK[w] * 3;
+      wayPos[w * 3] = routePos[k];
+      wayPos[w * 3 + 1] = routePos[k + 1] + 0.55;
+      wayPos[w * 3 + 2] = routePos[k + 2];
+    }
+    (wayGeo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+  }
+
+  /** The ribbon starts where the route comes into view, a few metres ahead of the camera. */
+  function trimRoute() {
+    const zMin = cam.z + 6;
+    let k0 = 0;
+    while (k0 < route.n - 2 && routePos[(k0 + 1) * 3 + 2] < zMin) k0++;
+    routeGeo.setDrawRange(k0 * 6, Math.max(0, route.n - 1 - k0) * 6);
+  }
+
+  function replanRoute(): boolean {
+    if (!planner.plan(cam.x, cam.z, plan) || plan.n < 2) return false;
+    const n = plan.n;
+    const had = route.shape;
+    const prevN = route.n;
+    // morph source: the route as it is on screen, sampled at each new vertex's z (z only ever increases along a route)
+    let j = 0;
+    for (let k = 0; k < n; k++) {
+      const x = plan.pos[k * 3], y = plan.pos[k * 3 + 1], z = plan.pos[k * 3 + 2];
+      let fx = x, fy = y;
+      if (had && prevN > 1) {
+        while (j + 1 < prevN && routePos[(j + 1) * 3 + 2] < z) j++;
+        if (j + 1 < prevN && routePos[j * 3 + 2] <= z) {
+          const za = routePos[j * 3 + 2], zb = routePos[(j + 1) * 3 + 2];
+          const t = zb > za ? (z - za) / (zb - za) : 0;
+          fx = routePos[j * 3] + (routePos[(j + 1) * 3] - routePos[j * 3]) * t;
+          fy = routePos[j * 3 + 1] + (routePos[(j + 1) * 3 + 1] - routePos[j * 3 + 1]) * t;
+        }
+      }
+      routeFrom[k * 3] = fx; routeFrom[k * 3 + 1] = fy; routeFrom[k * 3 + 2] = z;
+      routeTo[k * 3] = x; routeTo[k * 3 + 1] = y; routeTo[k * 3 + 2] = z;
+      ribS[2 * k] = ribS[2 * k + 1] = plan.s[k];
+    }
+    route.n = n;
+    route.shape = true;
+    route.morph = had ? 0 : 1;
+    route.wayN = plan.wayN;
+    for (let w = 0; w < plan.wayN; w++) {
+      route.wayK[w] = plan.wayK[w];
+      wayS[w] = plan.s[plan.wayK[w]];
+    }
+    wayGeo.setDrawRange(0, plan.wayN);
+    (routeGeo.getAttribute("aS") as THREE.BufferAttribute).needsUpdate = true;
+    (wayGeo.getAttribute("aS") as THREE.BufferAttribute).needsUpdate = true;
+
+    for (let q = 0; q < plan.segN; q++) {
+      const o = q * 7;
+      for (let v = 0; v < 4; v++) {
+        const e = (q * 4 + v) * 3;
+        const end = v < 2 ? 0 : 3; // vertices 0, 1 sit at the segment's start, 2, 3 at its end
+        conPos[e] = plan.seg[o + end]; conPos[e + 1] = plan.seg[o + end + 1]; conPos[e + 2] = plan.seg[o + end + 2];
+        conPrev[e] = plan.seg[o]; conPrev[e + 1] = plan.seg[o + 1]; conPrev[e + 2] = plan.seg[o + 2];
+        conNext[e] = plan.seg[o + 3]; conNext[e + 1] = plan.seg[o + 4]; conNext[e + 2] = plan.seg[o + 5];
+        conW[q * 4 + v] = plan.seg[o + 6];
+      }
+    }
+    conGeo.setDrawRange(0, plan.segN * 6);
+    for (const name of ["position", "aPrev", "aNext", "aW"]) (conGeo.getAttribute(name) as THREE.BufferAttribute).needsUpdate = true;
+
+    writeRoute(had ? 0 : 1);
+    trimRoute();
+    route.last = st.t;
+    route.lastZ = cam.z;
+    route.readout = { length: plan.length, maxSlope: plan.maxSlope, limit: planner.limitDeg, blocked: plan.blocked, ms: plan.ms, plans: planner.plans };
+    opts.onPlan?.(route.readout);
+    return true;
+  }
+
+  function updateRoute(dt: number) {
+    RU.uTime.value = st.t;
+    if (!route.ready) {
+      route.ready = planner.prime(cam.z, 6);
+      return;
+    }
+    planner.prime(cam.z, 4); // keep the window topped up as the rover advances
+    if (st.introDone && (!route.shape || st.t - route.last >= REPLAN_S || cam.z - route.lastZ >= REPLAN_M)) {
+      if (replanRoute() && route.revealT < 0) route.revealT = 0;
+    }
+    if (route.revealT >= 0 && route.reveal < 1e3) {
+      route.revealT += dt;
+      const k = clamp(route.revealT / 1.9, 0, 1);
+      route.reveal = k >= 1 ? 1e3 : (1 - Math.pow(1 - k, 2.2)) * 120;
+      RU.uReveal.value = route.reveal;
+      RU.uConGain.value = smoothstep(0.1, 0.9, k);
+    }
+    if (route.morph < 1) {
+      route.morph = Math.min(1, route.morph + dt / MORPH_S);
+      writeRoute(smoothstep(0, 1, route.morph));
+    }
+    if (route.shape) trimRoute();
+  }
+
   /* generate initial rows in budgeted chunks so the main thread never stalls */
   function prefill(budgetRows: number) {
     let allDone = true;
@@ -647,6 +1019,7 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
 
     updateRig(dt);
     U.uOrigin.value.set(cam.x, cam.y, cam.z);
+    updateRoute(dt);
 
     // intro: radial boot scan reveals the world
     if (st.introT >= 0 && !st.introDone) {
@@ -723,6 +1096,15 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
     st.t = 4;
     U.uCamZ.value = 0;
     frame(0.016);
+    // the poster shows the planned route too (no sweep, no flowing pulse)
+    planner.prime(cam.z, 1e9);
+    route.ready = true;
+    if (replanRoute()) {
+      route.revealT = 99;
+      route.reveal = 1e3;
+      RU.uReveal.value = 1e3;
+      RU.uConGain.value = 1;
+    }
     frame(0.016);
     opts.onReady?.();
   } else {
@@ -755,9 +1137,15 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
       if (st.introT < 0) st.introT = 0;
     },
     getReadout: () => st.readout,
+    getPlan: () => route.readout,
     getPointCount: () => layers.reduce((n, l) => n + l.count, 0),
     debugLayers(mask: boolean[]) {
       layers.forEach((l, i) => (l.points.visible = mask[i] !== false));
+    },
+    debugRoute() {
+      const a: number[][] = [];
+      for (let k = 0; k < Math.min(route.n, 400); k += 20) a.push([k, ribS[2 * k], routePos[k * 3], routePos[k * 3 + 1], routePos[k * 3 + 2]]);
+      return { n: route.n, reveal: route.reveal, morph: route.morph, cam: { ...cam }, head: U.uHead.value.toArray(), samples: a, plan: route.readout, segN: plan.segN, wayN: route.wayN };
     },
     debugInfo() {
       return { camZ: st.camZ, cam: { ...cam }, heading: st.heading, pxPerUnit: U.uPxPerUnit.value, reveal: U.uReveal.value, head: U.uHead.value.toArray(), n: U.uN.value.toArray(), layers: layers.map((l) => l.debugSummary()) };
@@ -773,6 +1161,9 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
       starGeo.dispose();
       (stars.material as THREE.Material).dispose();
       fanGeo.dispose(); fanMat.dispose(); beamGeo.dispose(); beamMat.dispose();
+      routeGeo.dispose(); routeMat.dispose(); underMat.dispose();
+      wayGeo.dispose(); wayMat.dispose();
+      conGeo.dispose(); conMat.dispose();
       emitter.geometry.dispose(); (emitter.material as THREE.Material).dispose();
       renderer.dispose();
       renderer.forceContextLoss();
