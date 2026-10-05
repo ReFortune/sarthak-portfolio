@@ -44,9 +44,9 @@ export function StatStrip({ stats }: { stats: { value: string; label: string; to
   return (
     <section aria-label="Key numbers" className="border-y border-bone/15">
       <div className="wrap">
-        <dl className="grid grid-cols-2 divide-bone/10 md:grid-cols-4 md:divide-x">
+        <dl className={`grid divide-bone/10 md:divide-x ${stats.length === 3 ? "grid-cols-3 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
           {stats.map((s) => (
-            <div key={s.label} className="border-b border-bone/10 px-0 py-8 md:border-b-0 md:px-7 md:py-12 md:first:pl-0">
+            <div key={s.label} className={`border-b border-bone/10 px-0 py-8 md:border-b-0 md:px-7 md:py-12 md:first:pl-0 ${stats.length === 3 ? "pr-3 md:pr-7" : ""}`}>
               <dd className="h-display text-[clamp(2.1rem,4.6vw,4.8rem)] leading-none">
                 {s.to !== undefined ? (
                   <span>

@@ -2,9 +2,10 @@
 
 A scroll-driven portfolio built around one idea: **I measure worlds.** The hero is a live LiDAR point cloud of a procedural
 planetary surface that you can paint with your cursor; every section after it is an interactive instrument built from real
-project data — a pushbroom-LiDAR simulator, a Mars coverage globe, an ascent profile, a transit-photometry lab and more.
+project data — a pushbroom-LiDAR simulator, a Mars coverage globe, an ascent profile, a transit-photometry lab, a rover route-planning demo and more.
 
 Content is sourced from the **September 2026 résumé** (`public/resume.pdf`) and the project reports in `public/assets/`.
+The one addition is **MPT (Mission Planning Tool)**, from my CSA internship. It is not on that résumé yet and is described in general terms only; the interactive planner next to it is an original demo on synthetic terrain, not CSA software or data.
 
 ## Stack
 
@@ -23,6 +24,7 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build && npm start
 npm run typecheck
+npm run verify:planner   # checks the route-planning demo's engine against an independent reference (~20 s)
 ```
 
 ## Where things live
@@ -31,7 +33,7 @@ npm run typecheck
 app/
   layout.tsx              fonts, metadata, JSON-LD, persistent chrome (Providers)
   page.tsx                the home page: Hero → … → Contact
-  projects/[slug]/        case studies (NOVA, ROUTE-M, CHIRON) — statically generated
+  projects/[slug]/        case studies (NOVA, ROUTE-M, MPT, CHIRON) — statically generated
   icon.svg, apple-icon.png            favicon (bold SVG) + touch icon
   opengraph-image.jpg, twitter-image.jpg   social card — a screenshot of the real hero (see below)
   sitemap.ts, robots.ts, not-found.tsx
@@ -40,12 +42,14 @@ components/
   hero/                   Hero, TerrainCanvas (React shell), terrainScene.ts (three.js)
   sections/               one file per home-page section
     lab/                  pushbroom-LiDAR simulator (PushbroomLab + pushbroomScene)
-    projects/             sticky project stack + the five interactive "instruments"
+    projects/             sticky project stack + the six interactive "instruments"
+      visuals/planner*    the route-planning demo: plannerEngine (terrain, sunlight, searches), plannerRender (canvas), PlannerVisual (UI)
     research/             TransitLab (HAT-P-18 b)
     leadership/           TrussBridge, TeamGrowth
   case/                   case-study pages + charts + figure lightbox
   ui/                     Reveal, SplitReveal, ScrubText, ScanFrame, CountUp, Marquee, Magnetic…
 data/                     ALL content — edit these, not components
+scripts/                  verify-planner.mjs — correctness checks for the route-planning demo's engine
 lib/                      terrain.ts (procedural planet), gsap.ts, scroll.ts, store.ts, hooks.ts, math.ts
 public/
   resume.pdf              the September 2026 résumé
@@ -62,6 +66,7 @@ Everything textual lives in `data/`:
 - A new résumé → replace `public/resume.pdf`, re-render `public/assets/resume/page-{1,2}.webp`, update `profile.resume`
 
 Only projects with `caseStudy: true` get a `/projects/<slug>` page (and a matching component in `components/case/`).
+Prose counts ("Six projects…") and the case-study header ("Case study 05 / 06") are derived from `projects`, so adding a project keeps them right.
 
 ## The hero, briefly
 
@@ -79,12 +84,18 @@ terrain-following and the cursor's live range/elevation readout.
 - Images are `next/image` (AVIF/WebP); figures were extracted from the reports and re-encoded as WebP (≈1.7 MB total).
 - The 2:13 intro video is click-to-play with a poster, so its 11 MB (720p) never loads unprompted.
 
+## The route-planning demo
+
+`components/sections/projects/visuals/` holds a small route-planning demo written for this site: a procedural patch of cratered terrain with slope classes (Safe, Caution, No-Go), keep-out zones, a Fastest and a Safest objective, sunlight that changes over time, and a search that can wait for the light. A* and Dijkstra return identical routes; the search wavefront is the real expansion order.
+
+What it is **not**: the terrain is synthetic and the parameters are illustrative, so it says nothing about any real tool or dataset; the patch is about a kilometre across; the sun swings far faster than a real one so a short drive shows what takes hours; and there is no battery model. The page says so. `npm run verify:planner` re-checks the engine against an independent reference (optimal costs to 1e-9 across all mode combinations, every sunlit-only arrival actually lit, the shadow mask against brute-force ray marching).
+
 ## Accessibility
 
 - Semantic landmarks, a skip link, and a focus-trapped menu and lightbox (Esc closes; focus returns to the trigger)
 - `prefers-reduced-motion`: no preloader, no smooth-scroll hijack, no scroll-linked animation; the hero renders a single still frame and every
   instrument shows its settled state
-- Every interactive instrument has text equivalents (`aria-label`s, live readouts) and works from the keyboard (sliders, buttons)
+- Every interactive instrument has text equivalents (`aria-label`s, live readouts) and works from the keyboard (sliders, buttons). In the route planner the A/B pins move with the arrow keys (Shift = 5 cells), the drive scrubber is a real slider, and every plan is announced in a live region
 - Custom cursor is enabled for fine pointers only; the native cursor is untouched on touch devices and inside form controls
 - If WebGL is unavailable the hero falls back to a static gradient and each 3D instrument shows a short notice; all readouts keep working
 

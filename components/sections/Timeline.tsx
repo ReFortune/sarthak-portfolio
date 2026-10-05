@@ -6,6 +6,8 @@ import Reveal from "../ui/Reveal";
 import { gsap } from "@/lib/gsap";
 import { useGsap } from "@/lib/hooks";
 import { timeline, type TimelineKind } from "@/data/timeline";
+import { projects } from "@/data/projects";
+import { countWord } from "@/lib/format";
 import { education } from "@/data/education";
 import { ymToYear } from "@/lib/math";
 
@@ -71,7 +73,7 @@ export default function Timeline() {
               Mission <span className="serif">timeline</span>
             </>
           }
-          lede="Everything above on one axis — five years of study, two internships, two design teams, five projects and a research paper, overlapping the way real schedules do."
+          lede={`Everything above on one axis — five years of study, two internships, two design teams, ${countWord(projects.length)} projects and a research paper, overlapping the way real schedules do.`}
         />
 
         <div ref={root}>

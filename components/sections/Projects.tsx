@@ -2,6 +2,7 @@ import SectionHead from "../ui/SectionHead";
 import ProjectStack from "./projects/ProjectStack";
 import ProjectCard from "./projects/ProjectCard";
 import { projects } from "@/data/projects";
+import { capitalize, countWord } from "@/lib/format";
 
 export default function Projects() {
   return (
@@ -15,7 +16,7 @@ export default function Projects() {
               Selected <span className="serif">missions</span>
             </>
           }
-          lede="Five projects I scoped, led and verified — from a balloon-borne sky photometer to a Mars orbiter, an ocean spectrometer, a research rover and a hospital robot."
+          lede={`${capitalize(countWord(projects.length))} projects I scoped, built and verified — from a balloon-borne sky photometer to a Mars orbiter, an ocean spectrometer, a research rover, a mission-planning tool and a hospital robot.`}
         />
         <ProjectStack>
           {projects.map((p, i) => (

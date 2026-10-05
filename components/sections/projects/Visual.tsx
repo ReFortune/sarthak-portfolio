@@ -15,6 +15,7 @@ const visuals: Record<VisualKind, ComponentType> = {
   route: dynamic(() => import("./visuals/RouteVisual"), { ssr: false, loading: Loading }),
   oscar: dynamic(() => import("./visuals/OscarVisual"), { ssr: false, loading: Loading }),
   sparrow: dynamic(() => import("./visuals/SparrowVisual"), { ssr: false, loading: Loading }),
+  planner: dynamic(() => import("./visuals/PlannerVisual"), { ssr: false, loading: Loading }),
   chiron: dynamic(() => import("./visuals/ChironVisual"), { ssr: false, loading: Loading }),
 };
 

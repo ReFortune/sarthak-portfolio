@@ -4,6 +4,7 @@ import { projects, getProject } from "@/data/projects";
 import NovaCase from "@/components/case/NovaCase";
 import RouteCase from "@/components/case/RouteCase";
 import ChironCase from "@/components/case/ChironCase";
+import MissionPlanningToolCase from "@/components/case/MissionPlanningToolCase";
 
 type Params = { slug: string };
 
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 const CASES: Record<string, () => React.JSX.Element> = {
   "nova-payload": NovaCase,
   "route-m": RouteCase,
+  "mission-planning-tool": MissionPlanningToolCase,
   "hospital-dispensing-robot": ChironCase,
 };
 

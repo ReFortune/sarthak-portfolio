@@ -2,7 +2,7 @@ import { TLink } from "../core/Transition";
 import SplitReveal from "../ui/SplitReveal";
 import Reveal from "../ui/Reveal";
 import Visual from "../sections/projects/Visual";
-import type { Project } from "@/data/projects";
+import { projects, type Project } from "@/data/projects";
 
 /** Case-study opener: title block + the project's own instrument from the home page, at full size. */
 export default function CaseHero({ p }: { p: Project }) {
@@ -14,7 +14,7 @@ export default function CaseHero({ p }: { p: Project }) {
             ← All projects
           </TLink>
           <p className="label tnum hidden sm:block">
-            Case study {p.n} / 05
+            Case study {p.n} / {String(projects.length).padStart(2, "0")}
           </p>
         </Reveal>
 
@@ -54,10 +54,10 @@ export default function CaseHero({ p }: { p: Project }) {
           </div>
 
           <Reveal className="lg:col-span-7" y={60} delay={0.15}>
-            <div className="window ticks relative h-[min(74svh,41rem)] min-h-[30rem]">
+            <div className={`window ticks relative ${p.visual === "planner" ? "h-[min(88svh,54rem)] min-h-[46rem]" : "h-[min(74svh,41rem)] min-h-[30rem]"}`}>
               <div className="absolute inset-0 flex flex-col">
                 <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
-                  <p className="label label-strong">Instrument · {p.code}</p>
+                  <p className="label label-strong">{p.visual === "planner" ? "Illustrative demo" : "Instrument"} · {p.code}</p>
                   <p className="label hidden sm:block">Interactive</p>
                 </div>
                 <div className="relative flex-1 overflow-hidden">

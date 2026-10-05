@@ -50,7 +50,7 @@ export const sections = [
   { id: "top", n: "00", label: "Home", hint: "Terrain scan" },
   { id: "profile", n: "01", label: "Profile", hint: "Who, why, where next" },
   { id: "experience", n: "02", label: "Experience", hint: "Canadian Space Agency · Canada’s Wonderland" },
-  { id: "projects", n: "03", label: "Projects", hint: "NOVA · ROUTE-M · OSCAR · Sparrow · CHIRON" },
+  { id: "projects", n: "03", label: "Projects", hint: "NOVA · ROUTE-M · OSCAR · Sparrow · MPT · CHIRON" },
   { id: "leadership", n: "04", label: "Leadership", hint: "Steel Bridge · Concrete Toboggan · LES" },
   { id: "research", n: "05", label: "Research", hint: "HAT-P-18 b transit photometry" },
   { id: "toolkit", n: "06", label: "Toolkit", hint: "Simulation, hardware, software, systems" },

@@ -1,6 +1,6 @@
 import type { Metric } from "./experience";
 
-export type VisualKind = "nova" | "route" | "oscar" | "sparrow" | "chiron";
+export type VisualKind = "nova" | "route" | "oscar" | "sparrow" | "planner" | "chiron";
 
 export type Project = {
   slug: string;
@@ -16,7 +16,7 @@ export type Project = {
   team: string;
   status: "Completed" | "Active";
   summary: string;
-  /** Résumé bullets, faithful to the source. */
+  /** Résumé bullets, faithful to the source. (MPT is not on the September 2026 résumé yet; its bullets describe the work in general terms.) */
   bullets: string[];
   metrics: Metric[];
   tags: string[];
@@ -148,8 +148,36 @@ export const projects: Project[] = [
     caseStudy: false,
   },
   {
-    slug: "hospital-dispensing-robot",
+    slug: "mission-planning-tool",
     n: "05",
+    code: "MPT",
+    name: "Mission Planning Tool",
+    kind: "Rover mission-planning software",
+    org: "Canadian Space Agency · Internship",
+    period: "Sep 2026 — Present",
+    start: "2026-09",
+    end: null,
+    role: "Front end & path-planning R&D",
+    team: "3-person team",
+    status: "Active",
+    summary:
+      "Part of my CSA internship: while the rest of the team worked on the legacy software, I built a new rover mission-planning tool that runs on any laptop, low-spec included, and explored unconventional ways to implement path planning.",
+    bullets: [
+      "Worked in a 3-person team on rover mission-planning software at the Canadian Space Agency, as part of my internship.",
+      "Owned the front end and explored unconventional ways of implementing path planning, while the rest of the team worked on the legacy software.",
+      "Built a new planning tool designed to run on any laptop, including low-spec machines.",
+    ],
+    metrics: [
+      { value: "3", label: "person team" },
+      { value: "Any", label: "laptop, even with low specs" },
+    ],
+    tags: ["Path planning", "Front end", "Mission planning", "Rover operations"],
+    visual: "planner",
+    caseStudy: true,
+  },
+  {
+    slug: "hospital-dispensing-robot",
+    n: "06",
     code: "CHIRON",
     name: "Hospital Medicinal Dispensing Robot",
     kind: "Autonomous medication-delivery robot",

@@ -21,8 +21,8 @@ export default function Resume() {
             <Reveal selector="[data-r]" stagger={0.1}>
               <p data-r className="label mb-5">Edition · {profile.resume.edition} · {profile.resume.pages} pages · PDF</p>
               <p data-r className="lede max-w-xl !text-bone">
-                Everything on this site, in the format recruiters and review boards expect — with the numbers, the dates and
-                the tools, nothing more.
+                The same story in the format recruiters and review boards expect — with the numbers, the dates and the
+                tools, nothing more.
               </p>
               <ul data-r className="mt-8 grid max-w-md grid-cols-2 gap-x-6 gap-y-3 border-y border-bone/10 py-6">
                 {[
