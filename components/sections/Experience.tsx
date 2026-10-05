@@ -5,7 +5,9 @@ import SplitReveal from "../ui/SplitReveal";
 import ScanFrame from "../ui/ScanFrame";
 import PushbroomLab from "./lab/PushbroomLab";
 import CoasterVisual from "./CoasterVisual";
-import { experience, type Experience as Exp } from "@/data/experience";
+import Visual from "./projects/Visual";
+import { TLink } from "../core/Transition";
+import { experience, type Experience as Exp, type Finding as Fnd, type ProjectIntro, type Stream } from "@/data/experience";
 
 const csa = experience.find((e) => e.id === "csa")!;
 const wonderland = experience.find((e) => e.id === "wonderland")!;
@@ -29,7 +31,12 @@ export default function Experience() {
         <article aria-labelledby="csa-title">
           <EntryHead exp={csa} id="csa-title" />
 
-          <div className="mt-14 divide-y divide-bone/10 border-y border-bone/10 md:mt-20">
+          {csa.streams && csa.primary && (
+            <div className="mt-20 md:mt-28">
+              <ProjectHead n="01" intro={csa.primary} />
+            </div>
+          )}
+          <div className={`${csa.streams ? "mt-12 md:mt-16" : "mt-14 md:mt-20"} divide-y divide-bone/10 border-y border-bone/10`}>
             {/* A */}
             <Finding letter="A" title={csa.findings[0].title} body={csa.findings[0].body}>
               <div className="grid grid-cols-3 gap-px bg-bone/10">
@@ -96,9 +103,9 @@ export default function Experience() {
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="label mb-3">Interactive · first principles</p>
-                <h3 className="h-title text-[clamp(1.7rem,3.4vw,3rem)]">
+                <h5 className="h-title text-[clamp(1.7rem,3.4vw,3rem)]">
                   Run the <span className="serif">trade study</span>
-                </h3>
+                </h5>
               </div>
               <p className="lede max-w-xl !text-[1rem]">
                 Fire a virtual pushbroom scanner over a patch of ground with three 3&nbsp;cm rocks. Change the scan rate and
@@ -107,6 +114,10 @@ export default function Experience() {
             </div>
             <PushbroomLab />
           </Reveal>
+
+          {csa.streams?.map((stream, i) => (
+            <ProjectBlock key={stream.id} stream={stream} n={String(i + 2).padStart(2, "0")} />
+          ))}
         </article>
 
         {/* ───────── Canada's Wonderland ───────── */}
@@ -179,6 +190,113 @@ function EntryHead({ exp, id }: { exp: Exp; id: string }) {
       </div>
       <p className="label tnum md:pb-3 md:text-right">{exp.period}</p>
     </header>
+  );
+}
+
+/** "01 — LiDAR surface mapping": names one of the internship's projects. */
+function ProjectLabel({ n, label }: { n: string; label: string }) {
+  return (
+    <Reveal className="flex items-center justify-between gap-4">
+      <p className="label label-strong flex items-center gap-3">
+        <span className="tnum text-laser">{n}</span>
+        <span aria-hidden="true">—</span>
+        {label}
+      </p>
+      <p className="label hidden sm:block">Internship project</p>
+    </Reveal>
+  );
+}
+
+/** Introduces a project of the role: its number and name, a display heading (a step below the employer's) and a line of context. */
+function ProjectHead({ n, intro }: { n: string; intro: ProjectIntro }) {
+  return (
+    <div>
+      <ProjectLabel n={n} label={intro.label} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-10">
+        <SplitReveal as="h4" className="h-display text-[clamp(2.1rem,5vw,4.75rem)] !leading-[0.94] lg:col-span-7">
+          <>
+            {intro.title} <span className="serif">{intro.accent}</span>
+          </>
+        </SplitReveal>
+        <p className="lede lg:col-span-5">{intro.lede}</p>
+      </div>
+    </div>
+  );
+}
+
+/** A further project of the same role: heading, findings, an interactive instrument and a link to the case study. */
+function ProjectBlock({ stream, n }: { stream: Stream; n: string }) {
+  return (
+    <div className="mt-28 md:mt-40">
+      <ProjectHead n={n} intro={stream} />
+
+      <div className="mt-12 divide-y divide-bone/10 border-y border-bone/10 md:mt-16">
+        {stream.findings.map((f, i) => (
+          <Finding key={f.title} letter={String.fromCharCode(65 + i)} title={f.title} body={f.body}>
+            <FindingFigure f={f} />
+          </Finding>
+        ))}
+      </div>
+
+      {stream.demo && (
+        <Reveal className="mt-20 md:mt-28" y={60}>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="label mb-3">{stream.demo.eyebrow}</p>
+              <h5 className="h-title text-[clamp(1.7rem,3.4vw,3rem)]">
+                {stream.demo.title} <span className="serif">{stream.demo.accent}</span>
+              </h5>
+            </div>
+            <p className="lede max-w-xl !text-[1rem]">{stream.demo.lede}</p>
+          </div>
+          <div className="window ticks relative h-[min(88svh,54rem)] min-h-[46rem]">
+            <div className="absolute inset-0 flex flex-col">
+              <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
+                <p className="label label-strong">{stream.demo.frameLabel}</p>
+                <p className="label hidden sm:block">Interactive</p>
+              </div>
+              <div className="relative flex-1 overflow-hidden">
+                <Visual kind={stream.demo.kind} />
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {stream.link && (
+        <div className="mt-10">
+          <TLink href={stream.link.href} label={stream.link.code} className="btn btn--solid" data-cursor="link">
+            {stream.link.label} <span aria-hidden="true" className="arrow">↗</span>
+          </TLink>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The figure beside a finding that has no bespoke visual: its numbers, or its focus areas. */
+function FindingFigure({ f }: { f: Fnd }) {
+  return (
+    <div className="space-y-5">
+      {f.metrics && (
+        <dl className={`grid gap-px bg-bone/10 ${f.metrics.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+          {f.metrics.map((m) => (
+            <div key={m.label} className="flex flex-col-reverse justify-end bg-ink p-4 md:p-6">
+              <dt className="label mt-3">{m.label}</dt>
+              <dd className="h-display text-[clamp(2.2rem,4.4vw,4.6rem)] leading-none">{m.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {f.tags && (
+        <ul className="flex flex-wrap gap-2" aria-label="Focus areas">
+          {f.tags.map((t) => (
+            <li key={t} className="chip">{t}</li>
+          ))}
+        </ul>
+      )}
+      {f.note && <p className="label !normal-case !tracking-normal">{f.note}</p>}
+    </div>
   );
 }
 

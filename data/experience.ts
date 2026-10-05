@@ -1,10 +1,35 @@
+import type { VisualKind } from "./projects";
+
 export type Metric = { value: string; label: string };
 
 export type Finding = {
   title: string;
-  /** Résumé bullet, kept faithful to the source. */
+  /** Résumé bullet, kept faithful to the source. (The mission-planning findings are not on the September 2026 résumé yet; they describe the work in general terms.) */
   body: string;
   metrics?: Metric[];
+  /** Short focus-area chips, for findings without a bespoke figure. */
+  tags?: string[];
+  /** One line under the figure. */
+  note?: string;
+};
+
+/** How one project of an internship introduces itself: its name, a display heading and a line of context. */
+export type ProjectIntro = {
+  /** Plain name, e.g. "Mission planning". */
+  label: string;
+  title: string;
+  /** The word in the title set in the serif italic. */
+  accent: string;
+  lede: string;
+};
+
+/** A further project of the same role, shown after the main findings with its own heading, findings and demo. */
+export type Stream = ProjectIntro & {
+  id: string;
+  findings: Finding[];
+  /** An interactive instrument shown below the findings. */
+  demo?: { kind: VisualKind; eyebrow: string; title: string; accent: string; lede: string; frameLabel: string };
+  link?: { href: string; label: string; code: string };
 };
 
 export type Experience = {
@@ -16,7 +41,10 @@ export type Experience = {
   start: string; // YYYY-MM
   end: string | null; // null = present
   current?: boolean;
+  /** Introduction of the project the main `findings` belong to. Only needed when `streams` is set. */
+  primary?: ProjectIntro;
   findings: Finding[];
+  streams?: Stream[];
 };
 
 export const experience: Experience[] = [
@@ -29,6 +57,12 @@ export const experience: Experience[] = [
     start: "2026-05",
     end: null,
     current: true,
+    primary: {
+      label: "LiDAR surface mapping",
+      title: "Map the",
+      accent: "surface",
+      lede: "Characterising a LiDAR sensor, defining the scan for surface mapping, and building the measurement chain in-house.",
+    },
     findings: [
       {
         title: "Characterise the sensor",
@@ -50,6 +84,46 @@ export const experience: Experience[] = [
       {
         title: "Own the chain",
         body: "Ability to replace a contracted third-party scanning service by building the in-house LiDAR measurement chain end to end — scanning module, Python processing pipeline, and point-cloud viewer.",
+      },
+    ],
+    streams: [
+      {
+        id: "planning",
+        label: "Mission planning",
+        title: "Plan the",
+        accent: "drive",
+        lede: "A separate project within the internship: rover mission planning, in a team of three. The others worked on the existing software; I built a new tool alongside it.",
+        findings: [
+          {
+            title: "Build a new tool",
+            body: "Built a new rover mission-planning tool alongside the team’s legacy software, designed to run on any laptop, low-spec ones included.",
+            metrics: [
+              { value: "3", label: "person team" },
+              { value: "Any", label: "laptop, low-spec included" },
+            ],
+          },
+          {
+            title: "Own the front end",
+            body: "Designed and built the interface of the new tool: what a planner sees and touches when setting up a plan and checking it.",
+            tags: ["Front end", "Interface design"],
+            note: "What a planner sees and touches.",
+          },
+          {
+            title: "Look beyond the usual",
+            body: "Explored unconventional ways of implementing path planning, rather than only the conventional ones.",
+            tags: ["Path planning", "Unconventional methods"],
+            note: "Beyond the usual approaches.",
+          },
+        ],
+        demo: {
+          kind: "planner",
+          eyebrow: "Interactive · illustrative",
+          title: "Fastest or",
+          accent: "safest",
+          lede: "Drag A and B, switch between Fastest and Safest, or close ground off with a keep-out zone. It is an original demo on made-up terrain, not CSA software or data.",
+          frameLabel: "Illustrative demo · MPT",
+        },
+        link: { href: "/projects/mission-planning-tool", label: "Read the MPT case study", code: "MPT" },
       },
     ],
   },

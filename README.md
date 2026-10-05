@@ -5,7 +5,7 @@ planetary surface that you can paint with your cursor; every section after it is
 project data — a pushbroom-LiDAR simulator, a Mars coverage globe, an ascent profile, a transit-photometry lab, a rover route-planning demo and more.
 
 Content is sourced from the **September 2026 résumé** (`public/resume.pdf`) and the project reports in `public/assets/`.
-The one addition is **MPT (Mission Planning Tool)**, from my CSA internship. It is not on that résumé yet and is described in general terms only; the interactive planner next to it is an original demo on synthetic terrain, not CSA software or data.
+The one addition is **MPT (Mission Planning Tool)**, a second project of my CSA internship. It is not on that résumé yet and is described in general terms only. It appears as its own project inside the CSA entry under Experience (findings, the live planner, a link onward) and as a card with a case study under Projects; the interactive planner is an original demo on synthetic terrain, not CSA software or data.
 
 ## Stack
 
@@ -62,6 +62,7 @@ Everything textual lives in `data/`:
 
 - `profile.ts` — name, role, links, hero copy, ticker figures, menu
 - `experience.ts`, `projects.ts`, `leadership.ts`, `research.ts`, `skills.ts`, `education.ts` — one source of truth each
+- A role that spans more than one project (the CSA internship) sets `primary` (an intro for its main `findings`) and `streams` (further projects, each with its own heading, findings, optional demo and link) in `experience.ts`
 - `timeline.ts` is **derived** from the files above, so the Gantt can never drift from the rest of the site
 - A new résumé → replace `public/resume.pdf`, re-render `public/assets/resume/page-{1,2}.webp`, update `profile.resume`
 
