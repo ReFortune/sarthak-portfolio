@@ -33,7 +33,7 @@ const facts: [string, string][] = [
 
 export default function Profile() {
   return (
-    <section id="profile" data-section="profile" className="relative py-16 md:py-44">
+    <section id="profile" data-section="profile" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="01"

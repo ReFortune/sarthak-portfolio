@@ -76,11 +76,14 @@ export default function ProjectCard({ p, index }: { p: Project; index: number })
                   Open case study <span aria-hidden="true" className="arrow">↗</span>
                 </TLink>
               ) : (
-                <ul className="flex flex-wrap gap-2" aria-label="Focus areas">
-                  {p.tags.slice(0, 4).map((t) => (
-                    <li key={t} className="chip">{t}</li>
-                  ))}
-                </ul>
+                <div>
+                  <p className="label mb-3 !normal-case !tracking-normal">Summary only — no separate case study yet.</p>
+                  <ul className="flex flex-wrap gap-2" aria-label="Focus areas">
+                    {p.tags.slice(0, 4).map((t) => (
+                      <li key={t} className="chip">{t}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           </div>

@@ -63,7 +63,7 @@ export default function Timeline() {
   const active = rows.find((r) => r.id === hover);
 
   return (
-    <section id="timeline" data-section="timeline" className="relative py-16 md:py-44">
+    <section id="timeline" data-section="timeline" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="07"

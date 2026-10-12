@@ -14,7 +14,7 @@ const wonderland = experience.find((e) => e.id === "wonderland")!;
 
 export default function Experience() {
   return (
-    <section id="experience" data-section="experience" className="relative py-16 md:py-44">
+    <section id="experience" data-section="experience" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="02"
@@ -98,7 +98,9 @@ export default function Experience() {
             </Finding>
           </div>
 
-          <Reveal className="mt-16 md:mt-28" y={60}>
+          {/* anchor for the hero + proof-card links: an unanimated marker above the heading, clear of the fixed header */}
+          <div id="trade-study" aria-hidden="true" className="pointer-events-none -mb-24 mt-16 h-24 md:mt-28" />
+          <Reveal className="mt-0" y={60}>
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="label mb-3">Interactive · first principles</p>
@@ -120,7 +122,7 @@ export default function Experience() {
         </article>
 
         {/* ───────── Canada's Wonderland ───────── */}
-        <article aria-labelledby="wonder-title" className="mt-24 md:mt-48">
+        <article aria-labelledby="wonder-title" className="mt-24 md:mt-36">
           <EntryHead exp={wonderland} id="wonder-title" />
           <div className="mt-14 grid gap-12 md:mt-20 lg:grid-cols-12 lg:gap-10">
             <div className="lg:col-span-5">

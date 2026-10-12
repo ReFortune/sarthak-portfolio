@@ -4,6 +4,8 @@ import Reveal from "../ui/Reveal";
 import Visual from "../sections/projects/Visual";
 import { projects, type Project } from "@/data/projects";
 
+const cases = projects.filter((x) => x.caseStudy);
+
 /** Case-study opener: title block + the project's own instrument from the home page, at full size. */
 export default function CaseHero({ p }: { p: Project }) {
   return (
@@ -14,7 +16,7 @@ export default function CaseHero({ p }: { p: Project }) {
             ← All projects
           </TLink>
           <p className="label tnum hidden sm:block">
-            Case study {p.n} / {String(projects.length).padStart(2, "0")}
+            Case study {cases.findIndex((c) => c.slug === p.slug) + 1} / {cases.length}
           </p>
         </Reveal>
 
@@ -31,7 +33,7 @@ export default function CaseHero({ p }: { p: Project }) {
                 {p.code}
               </SplitReveal>
               <p className="serif mt-5 text-[clamp(1.3rem,2.1vw,2rem)] leading-tight text-bone-dim">{p.name}</p>
-              <ul aria-label="Results" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 border-y border-bone/10 py-4">
+              <ul aria-label="Results" className="mt-6 flex md:hidden flex-wrap gap-x-5 gap-y-3 border-y border-bone/10 py-4">
                 {p.metrics.slice(0, 3).map((m) => (
                   <li key={m.label} className="flex items-baseline gap-2.5">
                     <span className="h-display text-[1.35rem] leading-none text-bone">{m.value}</span>

@@ -106,7 +106,7 @@ export default function NovaVisual() {
             return (
               <g key={k}>
                 <line x1="18" y1={y} x2="34" y2={y} stroke="rgb(236 231 219)" strokeOpacity="0.5" />
-                <text x="42" y={y + 3.5} fill="rgb(236 231 219)" fillOpacity="0.6" fontSize="10" fontFamily="var(--font-mono)" letterSpacing="1">
+                <text x="42" y={y + 3.5} className="max-sm:hidden" fill="rgb(236 231 219)" fillOpacity="0.6" fontSize="10" fontFamily="var(--font-mono)" letterSpacing="1">
                   {k} km
                 </text>
               </g>

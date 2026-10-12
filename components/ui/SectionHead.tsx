@@ -26,7 +26,6 @@ export default function SectionHead({
           <span aria-hidden="true">—</span>
           {label}
         </p>
-        <p className="label hidden sm:block">Sarthak Sahai · 2026</p>
       </Reveal>
       <SplitReveal
         as="h2"

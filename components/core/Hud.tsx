@@ -100,7 +100,7 @@ export default function Hud() {
     <>
       {/* fade scrims: scrolling content dissolves under the header / HUD instead of colliding with it */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[54] h-28 bg-gradient-to-b from-ink from-35% via-ink/80 to-transparent md:h-32" />
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[54] hidden h-16 bg-gradient-to-t from-ink via-ink/55 to-transparent md:block" />
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[54] hidden h-20 bg-gradient-to-t from-ink from-30% via-ink/80 to-transparent md:block" />
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[55] text-white mix-blend-difference">
       {/* viewfinder ticks */}
       {["left-3.5 top-3.5", "right-3.5 top-3.5 rotate-90", "right-3.5 bottom-3.5 rotate-180", "left-3.5 bottom-3.5 -rotate-90"].map((c) => (

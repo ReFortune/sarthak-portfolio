@@ -66,7 +66,7 @@ export default function TransitLab() {
       sx.strokeStyle = "rgba(236,231,219,0.10)"; sx.setLineDash([3, 5]);
       sx.beginPath(); sx.moveTo(sw * 0.06, y0); sx.lineTo(sw * 0.94, y0); sx.stroke(); sx.setLineDash([]);
       // scale bar: Jupiter radius for context (0.989 R_J planet)
-      sx.fillStyle = "rgba(163,160,148,0.9)"; sx.font = "10px var(--font-mono), monospace"; sx.textAlign = "left";
+      sx.fillStyle = "rgba(163,160,148,0.9)"; sx.font = "11px var(--font-mono), monospace"; sx.textAlign = "left";
       sx.fillText("HAT-P-18 · K2 dwarf", sw * 0.06, sh * 0.1);
       sx.fillText("b · planet", px - rp, y0 + rp + 16);
     };
@@ -84,7 +84,7 @@ export default function TransitLab() {
       cx.fillRect(X(C.egressStart), T, X(C.egressEnd) - X(C.egressStart), h);
       // grid
       cx.strokeStyle = "rgba(236,231,219,0.08)"; cx.lineWidth = 1;
-      cx.font = "10px var(--font-mono), monospace"; cx.fillStyle = "rgba(163,160,148,0.9)"; cx.textAlign = "right";
+      cx.font = "11px var(--font-mono), monospace"; cx.fillStyle = "rgba(163,160,148,0.9)"; cx.textAlign = "right";
       for (const v of [0.97, 0.98, 0.99, 1.0, 1.01]) { cx.beginPath(); cx.moveTo(L, Y(v)); cx.lineTo(L + w, Y(v)); cx.stroke(); cx.fillText(v.toFixed(2), L - 7, Y(v) + 3); }
       cx.textAlign = "center";
       for (const i of [0, 100, 200, 300, 400, 500, 600, 700]) { cx.beginPath(); cx.moveTo(X(i), T); cx.lineTo(X(i), T + h); cx.stroke(); cx.fillText(String(i), X(i), T + h + 15); }

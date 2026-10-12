@@ -7,7 +7,7 @@ import { capitalize, countWord } from "@/lib/format";
 
 export default function Projects() {
   return (
-    <section id="projects" data-section="projects" className="relative py-16 md:py-44">
+    <section id="projects" data-section="projects" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="03"

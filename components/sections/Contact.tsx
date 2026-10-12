@@ -7,7 +7,7 @@ import { profile } from "@/data/profile";
 
 export default function Contact() {
   return (
-    <section id="contact" data-section="contact" className="relative pt-16 md:pt-44">
+    <section id="contact" data-section="contact" className="relative pt-16 md:pt-36">
       <div className="wrap">
         <SectionHead
           n="09"

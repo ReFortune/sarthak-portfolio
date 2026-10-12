@@ -87,7 +87,7 @@ export type DocLink = { href: string; label: string; detail: string; size: strin
 export function Documents({ docs }: { docs: DocLink[] }) {
   return (
     <Reveal selector="a" stagger={0.1}>
-      <ul className="grid gap-px bg-bone/10 sm:grid-cols-2">
+      <ul className={`grid gap-px bg-bone/10 ${docs.length > 1 ? "sm:grid-cols-2" : ""}`}>
         {docs.map((d) => (
           <li key={d.href} className="bg-ink">
             <a href={d.href} target="_blank" rel="noopener noreferrer" className="group flex h-full items-end justify-between gap-6 p-7 transition-colors hover:bg-ink-2 md:p-9">
@@ -110,11 +110,12 @@ export function NextProject({ current }: { current: string }) {
   const cases = projects.filter((p) => p.caseStudy);
   const i = cases.findIndex((p) => p.slug === current);
   const next: Project = cases[(i + 1) % cases.length];
-  const prev: Project = cases[(i - 1 + cases.length) % cases.length];
+  const prev: Project | null = i > 0 ? cases[i - 1] : null;
+  const last = i === cases.length - 1;
   return (
     <section className="relative border-t border-bone/15 py-24 md:py-40">
       <div className="wrap">
-        <p className="label mb-8">Next case study</p>
+        <p className="label mb-8">{last ? "Back to the first case study" : "Next case study"}</p>
         <TLink
           href={`/projects/${next.slug}`}
           label={next.code}
@@ -133,7 +134,7 @@ export function NextProject({ current }: { current: string }) {
           </span>
         </TLink>
         <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-1 border-t border-bone/10 pt-6">
-          {prev.slug !== next.slug && (
+          {prev && (
             <TLink href={`/projects/${prev.slug}`} label={prev.code} className="label link inline-flex min-h-11 items-center !text-bone">← Previous: {prev.code}</TLink>
           )}
           <TLink href="/#projects" label="Projects" className="label link inline-flex min-h-11 items-center !text-bone">All projects</TLink>

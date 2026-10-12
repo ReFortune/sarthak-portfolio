@@ -136,14 +136,14 @@ export default function ChironVisual() {
           >
             <line x1={MAIN_X} y1={Y_START + 14} x2={MAIN_X} y2={Y_END - 12} stroke="rgb(236 231 219)" strokeOpacity="0.5" strokeWidth="6" strokeLinecap="round" />
             <line x1={MAIN_X} y1={Y_START + 14} x2={MAIN_X} y2={Y_END - 12} stroke="rgb(6 7 11)" strokeWidth="2" strokeDasharray="1 7" strokeLinecap="round" />
-            <text x={MAIN_X - 6} y={Y_START + 34} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="8" letterSpacing="1.4">START · PHARMACY</text>
-            <text x={MAIN_X - 6} y={Y_END - 22} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="8" letterSpacing="1.4">NURSING STATION</text>
+            <text x={MAIN_X - 6} y={Y_START + 34} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">START · PHARMACY</text>
+            <text x={MAIN_X - 6} y={Y_END - 22} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">NURSING STATION</text>
             {ROOMS.map((r, i) => (
               <g key={r.y}>
                 <line x1={MAIN_X} y1={r.y} x2={BRANCH_X} y2={r.y} stroke="rgb(236 231 219)" strokeOpacity="0.5" strokeWidth="6" />
                 <line x1={MAIN_X} y1={r.y} x2={BRANCH_X} y2={r.y} stroke="rgb(6 7 11)" strokeWidth="2" strokeDasharray="1 7" />
                 <rect ref={(n) => { inds.current[i] = n; }} x={BRANCH_X + 6} y={r.y - 11} width="22" height="22" fill={r.tint} fillOpacity={r.code === "NONE" ? 0.12 : 0.9} stroke={r.tint} strokeWidth="1" />
-                <text x={BRANCH_X + 36} y={r.y + 3} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="8" letterSpacing="1.2">ROOM {i + 1}</text>
+                <text x={BRANCH_X + 36} y={r.y + 3} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">ROOM {i + 1}</text>
                 <rect ref={(n) => { pills.current[i] = n; }} x={BRANCH_X - 6} y={r.y - 2} width="9" height="9" fill="rgb(236 231 219)" opacity="0" />
               </g>
             ))}

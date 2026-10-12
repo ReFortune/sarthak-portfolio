@@ -11,7 +11,7 @@ const AXIS = 75000;
 
 export default function Research() {
   return (
-    <section id="research" data-section="research" className="relative py-16 md:py-44">
+    <section id="research" data-section="research" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="05"

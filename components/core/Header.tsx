@@ -11,8 +11,8 @@ import Magnetic from "../ui/Magnetic";
 
 /** Always-visible desktop shortcuts — plain words, one click to the three things a visitor most often wants. */
 const quick = [
-  { id: "projects", label: "Projects" },
   { id: "experience", label: "Experience" },
+  { id: "projects", label: "Projects" },
   { id: "contact", label: "Contact" },
 ] as const;
 

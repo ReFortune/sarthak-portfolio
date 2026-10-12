@@ -69,7 +69,7 @@ export default function Toolkit() {
   const clusterOf = useMemo(() => Object.fromEntries(skillClusters.map((c) => [c.id, c])), []);
 
   return (
-    <section id="toolkit" data-section="toolkit" className="relative py-16 md:py-44">
+    <section id="toolkit" data-section="toolkit" className="relative py-16 md:py-36">
       <div className="wrap">
         <SectionHead
           n="06"

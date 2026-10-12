@@ -92,16 +92,16 @@ export default function SparrowVisual() {
             {[-1, 1].map((s) => (
               <line key={s} x1={CX} y1={150} x2={CX + s * 290} y2={150 + (s > 0 ? 6 : 6)} stroke="rgb(255 91 46)" strokeOpacity="0.5" />
             ))}
-            <text x={CX + 150} y={120} fill="rgb(255 91 46)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">360° PLANE</text>
+            <text className="max-sm:hidden" x={CX + 150} y={120} fill="rgb(255 91 46)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">360° PLANE</text>
           </g>
           <g data-fov="stereo" opacity="0">
             <polygon points={`${CX - 18},150 ${CX + 290},${150 - 150} ${CX + 290},${150 + 40}`} fill="url(#sp-fov2)" />
             <polygon points={`${CX + 18},150 ${CX + 290},${150 - 40} ${CX + 290},${150 + 150}`} fill="url(#sp-fov)" />
-            <text x={CX + 150} y={110} fill="rgb(236 231 219)" fillOpacity="0.85" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">OVERLAP → DEPTH</text>
+            <text className="max-sm:hidden" x={CX + 150} y={110} fill="rgb(236 231 219)" fillOpacity="0.85" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">OVERLAP → DEPTH</text>
           </g>
           <g data-fov="mono" opacity="0">
             <polygon points={`${CX},150 ${CX + 290},${150 - 110} ${CX + 290},${150 + 110}`} fill="url(#sp-fov)" />
-            <text x={CX + 170} y={150} fill="rgb(236 231 219)" fillOpacity="0.85" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">SINGLE VIEW</text>
+            <text className="max-sm:hidden" x={CX + 170} y={150} fill="rgb(236 231 219)" fillOpacity="0.85" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">SINGLE VIEW</text>
           </g>
 
           {/* rover */}
@@ -130,7 +130,7 @@ export default function SparrowVisual() {
           </g>
 
           {/* interface callout */}
-          <g fontFamily="var(--font-mono)" fontSize="9.5" letterSpacing="1.4" fill="rgb(163 160 148)">
+          <g className="max-sm:hidden" fontFamily="var(--font-mono)" fontSize="9.5" letterSpacing="1.4" fill="rgb(163 160 148)">
             <line x1={CX + 44} y1={PLATE_Y + 4} x2={CX + 100} y2={PLATE_Y + 26} stroke="rgb(163 160 148)" strokeOpacity="0.6" />
             <text x={CX + 104} y={PLATE_Y + 32}>COMMON MOUNT PLATE</text>
             <text x={CX + 104} y={PLATE_Y + 45}>+ CONNECTOR · NO REWORK</text>
@@ -158,7 +158,7 @@ export default function SparrowVisual() {
             <circle cx={CX} cy={PLATE_Y - 22} r="5.5" fill="rgb(255 91 46)" />
           </g>
 
-          <text x="20" y="76" fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.6">SPARROW · 1:10 SCALE · WHEELED</text>
+          <text className="max-sm:hidden" x="20" y="76" fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.6">SPARROW · 1:10 SCALE · WHEELED</text>
         </svg>
       </div>
 

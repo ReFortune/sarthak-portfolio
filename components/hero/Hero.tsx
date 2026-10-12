@@ -222,7 +222,11 @@ export default function Hero() {
                 {profile.role}<span className="mx-2 hidden text-bone-mute sm:inline">·</span><br className="sm:hidden" />{profile.org}
               </p>
               <p className="label !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
-                {profile.program}, {profile.school} <span className="text-bone-mute">·</span> Open to aerospace roles
+                {profile.program}, {profile.school}
+              </p>
+              <p className="label label-strong !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
+                <span aria-hidden="true" className="mr-2 inline-block h-1 w-1 -translate-y-px rounded-full bg-ice align-middle" />
+                Open to aerospace roles
               </p>
             </div>
 
@@ -244,6 +248,7 @@ export default function Hero() {
                   Résumé <span aria-hidden="true" className="arrow">↓</span>
                 </a>
               </Magnetic>
+              <a href="#contact" className="label link inline-flex min-h-11 items-center !text-bone">Contact →</a>
             </div>
           </div>
 
@@ -252,7 +257,7 @@ export default function Hero() {
       </div>
 
       {/* scroll cue — sits on the HUD baseline, centred */}
-      <p aria-hidden="true" className="label pointer-events-none absolute bottom-[1.05rem] left-1/2 z-10 hidden -translate-x-1/2 !text-bone/60 md:block">
+      <p aria-hidden="true" className="label pointer-events-none absolute bottom-[1.05rem] left-1/2 z-10 hidden -translate-x-1/2 !text-bone/85 md:block">
         Scroll <span className="inline-block [animation:nudge_1.8s_var(--ease-io)_infinite]">↓</span>
       </p>
     </section>
@@ -327,7 +332,7 @@ function ScanPanel({ className = "" }: { className?: string }) {
           </div>
         ))}
       </dl>
-      <a href="#experience" className="label link mt-4 inline-block !text-bone-dim hover:!text-bone">
+      <a href="#trade-study" className="label link mt-4 inline-block !text-bone-dim hover:!text-bone">
         Run the trade study →
       </a>
       <RoutePanel />
