@@ -14,7 +14,7 @@ const wonderland = experience.find((e) => e.id === "wonderland")!;
 
 export default function Experience() {
   return (
-    <section id="experience" data-section="experience" className="relative py-28 md:py-44">
+    <section id="experience" data-section="experience" className="relative py-16 md:py-44">
       <div className="wrap">
         <SectionHead
           n="02"
@@ -32,7 +32,7 @@ export default function Experience() {
           <EntryHead exp={csa} id="csa-title" />
 
           {csa.streams && csa.primary && (
-            <div className="mt-20 md:mt-28">
+            <div className="mt-16 md:mt-28">
               <ProjectHead n="01" intro={csa.primary} />
             </div>
           )}
@@ -71,8 +71,7 @@ export default function Experience() {
                 ))}
               </div>
               <p className="label mt-4 !normal-case !tracking-normal">
-                Four configurations, traded across pitch angles and traverse speeds for NASA’s Artemis 4 surface mapping.{" "}
-                <a href="#pushbroom-lab" className="link !text-bone">Try it below ↓</a>
+                Four configurations, traded across pitch angles and traverse speeds for NASA’s Artemis 4 surface mapping.
               </p>
             </Finding>
 
@@ -99,7 +98,7 @@ export default function Experience() {
             </Finding>
           </div>
 
-          <Reveal className="mt-20 md:mt-28" y={60}>
+          <Reveal className="mt-16 md:mt-28" y={60}>
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="label mb-3">Interactive · first principles</p>
@@ -121,7 +120,7 @@ export default function Experience() {
         </article>
 
         {/* ───────── Canada's Wonderland ───────── */}
-        <article aria-labelledby="wonder-title" className="mt-32 md:mt-48">
+        <article aria-labelledby="wonder-title" className="mt-24 md:mt-48">
           <EntryHead exp={wonderland} id="wonder-title" />
           <div className="mt-14 grid gap-12 md:mt-20 lg:grid-cols-12 lg:gap-10">
             <div className="lg:col-span-5">
@@ -227,7 +226,7 @@ function ProjectHead({ n, intro }: { n: string; intro: ProjectIntro }) {
 /** A further project of the same role: heading, findings, an interactive instrument and a link to the case study. */
 function ProjectBlock({ stream, n }: { stream: Stream; n: string }) {
   return (
-    <div className="mt-28 md:mt-40">
+    <div className="mt-20 md:mt-40">
       <ProjectHead n={n} intro={stream} />
 
       <div className="mt-12 divide-y divide-bone/10 border-y border-bone/10 md:mt-16">
@@ -242,7 +241,7 @@ function ProjectBlock({ stream, n }: { stream: Stream; n: string }) {
         <>
           {/* the hero links here: an unanimated marker just above the demo, so the scroll lands with the heading clear of the header */}
           <div id={stream.demo.id} aria-hidden="true" className="pointer-events-none -mb-24 h-24" />
-          <Reveal className="mt-20 md:mt-28" y={60}>
+          <Reveal className="mt-16 md:mt-28" y={60}>
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="label mb-3">{stream.demo.eyebrow}</p>

@@ -166,6 +166,9 @@ const STAR_FRAG = /* glsl */ `
 /* ── route: a ribbon along the planned path (constant width on screen), a dark stroke under it, diamonds at the
       waypoints, and a contour around the steep ground it avoids ── */
 
+/** Portrait screens: how far (fraction of the viewport height) the scene is pushed down, clear of the hero copy. */
+const PORTRAIT_SHIFT = 0.2;
+
 const RIB_VERT = /* glsl */ `
   uniform vec2 uRes;
   uniform float uWidth, uGain, uTime, uReveal, uShow, uSinB, uFlow;
@@ -412,6 +415,8 @@ export type TerrainOptions = {
   lowPower: boolean;
   onReady?: () => void;
   onPlan?: (p: PlanReadout) => void;
+  /** Portrait only: fraction of the viewport height to slide the scene down (the hero measures it from its layout). */
+  getViewShift?: () => number;
 };
 
 export type Readout = { range: number; elev: number; bearing: number };
@@ -713,6 +718,10 @@ export function createTerrainScene(canvas: HTMLCanvasElement, opts: TerrainOptio
     const aspect = w / h;
     camera.fov = aspect < 0.85 ? 62 : aspect < 1.3 ? 50 : 42;
     camera.aspect = aspect;
+    // Portrait: the copy owns the top of the screen, so slide the whole scene (route included) down into the band
+    // between the buttons and the name instead of letting it run behind the paragraph.
+    if (aspect < 0.85) camera.setViewOffset(w, h, 0, -Math.round(h * (opts.getViewShift?.() ?? PORTRAIT_SHIFT)), w, h);
+    else camera.clearViewOffset();
     camera.updateProjectionMatrix();
     U.uPxPerUnit.value = (h * dpr) / (2 * Math.tan((camera.fov * Math.PI) / 360));
     starU.uPx.value = dpr * (w < 700 ? 0.9 : 1.15);

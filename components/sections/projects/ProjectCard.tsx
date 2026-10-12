@@ -87,7 +87,7 @@ export default function ProjectCard({ p, index }: { p: Project; index: number })
         </div>
 
         {/* ── visual ── */}
-        <div className={`relative ${p.visual === "planner" ? "min-h-[46rem]" : "min-h-[26rem]"} border-t border-bone/10 bg-ink lg:col-span-7 lg:min-h-0 lg:border-l lg:border-t-0`}>
+        <div className={`relative ${p.visual === "planner" ? "min-h-[46rem]" : p.visual === "oscar" ? "min-h-[34rem]" : p.visual === "route" ? "min-h-[30rem]" : p.visual === "chiron" ? "min-h-[46rem] sm:min-h-[34rem]" : "min-h-[26rem]"} border-t border-bone/10 bg-ink lg:col-span-7 lg:min-h-0 lg:border-l lg:border-t-0`}>
           <div className="absolute inset-0 flex flex-col">
             <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
               <p className="label label-strong">Fig. {p.n} — {FIG_TITLES[p.visual]}</p>

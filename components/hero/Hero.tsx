@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useGsap } from "@/lib/hooks";
-import { bootStore, planReadout, useStore } from "@/lib/store";
+import { bootStore, heroViewShift, planReadout, useStore } from "@/lib/store";
 import { profile } from "@/data/profile";
 import { lerp, smoothstep } from "@/lib/math";
 import TerrainCanvas from "./TerrainCanvas";
@@ -27,6 +27,7 @@ export default function Hero() {
   const content = useRef<HTMLDivElement>(null);
   const nameWrap = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLHeadingElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const progress = useRef(0);
   const boot = useStore(bootStore);
 
@@ -136,6 +137,24 @@ export default function Hero() {
     };
   }, []);
 
+  /* portrait: slide the terrain (and the route on it) into the band between the buttons and the name */
+  useEffect(() => {
+    const el = root.current, c = content.current, cta = ctaRef.current, nm = nameWrap.current;
+    if (!el || !c || !cta || !nm) return;
+    const update = () => {
+      if (el.clientWidth / el.clientHeight >= 0.85) return;
+      const top = c.getBoundingClientRect().top;
+      const band = (cta.getBoundingClientRect().bottom - top + (nm.getBoundingClientRect().top - top)) / 2;
+      // 0.43: where the route sits on screen (as a fraction of the height) with no shift
+      heroViewShift.set(Math.min(0.34, Math.max(0.1, band / el.clientHeight - 0.43)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    [el, cta, nm].forEach((n) => ro.observe(n));
+    document.fonts?.ready.then(update);
+    return () => ro.disconnect();
+  }, []);
+
   /* intro choreography (after the preloader lifts) */
   useEffect(() => {
     if (!boot.done || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -197,19 +216,24 @@ export default function Hero() {
 
         <div className="grid items-start gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <p className="hero-fade label mb-6 sm:mb-8">
-              <span className="mr-3 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-laser align-middle [animation:blink_1.4s_infinite]" />
-              {profile.role} <span className="text-bone-mute">·</span> {profile.org}
-            </p>
+            <div className="hero-fade mb-6 space-y-2 sm:mb-8">
+              <p className="label label-strong !text-[0.8rem] !leading-relaxed !text-bone sm:!text-[0.85rem]">
+                <span className="mr-3 inline-block h-1.5 w-1.5 shrink-0 -translate-y-px rounded-full bg-laser [animation:blink_1.4s_infinite]" />
+                {profile.role}<span className="mx-2 hidden text-bone-mute sm:inline">·</span><br className="sm:hidden" />{profile.org}
+              </p>
+              <p className="label !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
+                {profile.program}, {profile.school} <span className="text-bone-mute">·</span> Open to aerospace roles
+              </p>
+            </div>
 
-            <SplitReveal as="p" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.1rem,5.5vw,5.9rem)] !leading-[0.92]">
+            <SplitReveal as="h2" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.1rem,5.5vw,5.9rem)] !leading-[0.92]">
               {profile.hook.lead}<br />
               <span className="serif text-[1.08em] normal-case tracking-[-0.02em]">{profile.hook.accent}<span className="text-laser">.</span></span>
             </SplitReveal>
 
             <p className="hero-fade lede mt-6 max-w-[34rem] sm:mt-8">{profile.tagline}</p>
 
-            <div className="hero-fade mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
+            <div ref={ctaRef} className="hero-fade mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
               <Magnetic strength={0.22}>
                 <a href="#projects" className="btn btn--solid">
                   See the work <span aria-hidden="true" className="arrow">↓</span>
@@ -254,10 +278,10 @@ function ScanPanel({ className = "" }: { className?: string }) {
 
   /* points counter */
   useEffect(() => {
-    let last = performance.now();
+    let last = gsap.ticker.time; // seconds, the same clock the ticker hands to `tick`
     const pps = m.rate * pointsPerScan(m.inc);
     const tick = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
+      const dt = Math.min(0.1, Math.max(0, now - last));
       last = now;
       count.current += pps * dt;
       if (total.current) total.current.textContent = Math.floor(count.current).toLocaleString("en-US");
@@ -315,9 +339,9 @@ function ScanPanel({ className = "" }: { className?: string }) {
 function RoutePanel() {
   const plan = useStore(planReadout);
   const rows: [string, string][] = [
-    ["Route", plan ? `${Math.round(plan.length)} m` : "—"],
-    ["Steepest cell", plan ? `${Math.round(plan.maxSlope)}° · limit ${plan.limit}°` : "—"],
-    ["Planned in", plan ? `${plan.ms < 10 ? plan.ms.toFixed(1) : Math.round(plan.ms)} ms` : "—"],
+    ["Route", plan ? `${Math.round(plan.length)} m` : "planning…"],
+    ["Steepest cell", plan ? `${Math.round(plan.maxSlope)}° · limit ${plan.limit}°` : "planning…"],
+    ["Planned in", plan ? `${plan.ms < 10 ? plan.ms.toFixed(1) : Math.round(plan.ms)} ms` : "planning…"],
   ];
   return (
     <div className="mt-5 border-t border-bone/15 pt-4 [@media(max-height:820px)]:mt-3.5 [@media(max-height:820px)]:pt-3">

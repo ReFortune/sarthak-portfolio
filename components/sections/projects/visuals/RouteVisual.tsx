@@ -66,20 +66,22 @@ export default function RouteVisual() {
         </p>
       )}
 
+      {/* phones: the planet fills the frame, so the heading sits on a soft scrim */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink via-ink/75 to-transparent sm:hidden" />
       <div className="pointer-events-none absolute left-4 top-4 md:left-5 md:top-5">
         <p className="label">Mars · low orbit</p>
         <p className="h-display mt-1 text-[clamp(1.3rem,2vw,1.9rem)]">
-          300 km <span className="serif text-[0.55em] text-bone-dim">altitude</span>
+          300 km <span className="serif text-[0.62em] text-bone-dim">altitude</span>
         </p>
-        <p className="label mt-1 tnum">Period ≈ 113.4 min</p>
+        <p className="label mt-1 tnum hidden sm:block">Period ≈ 113.4 min</p>
       </div>
 
       <ul className="pointer-events-none absolute right-4 top-4 space-y-2 text-right md:right-5 md:top-5">
         <li className="label flex items-center justify-end gap-2.5">
-          ~93° near-polar · global coverage <span className="h-2 w-2 rounded-full bg-[#a8d8ff] shadow-[0_0_10px_#a8d8ff]" />
+          ~93° <span className="hidden sm:inline">near-polar · global coverage</span><span className="sm:hidden">polar</span> <span className="h-2 w-2 rounded-full bg-[#a8d8ff] shadow-[0_0_10px_#a8d8ff]" />
         </li>
         <li className="label flex items-center justify-end gap-2.5">
-          ~45° · complementary passes <span className="h-2 w-2 rounded-full bg-laser shadow-[0_0_10px_rgb(var(--laser))]" />
+          ~45° <span className="hidden sm:inline">· complementary passes</span><span className="sm:hidden">fill-in</span> <span className="h-2 w-2 rounded-full bg-laser shadow-[0_0_10px_rgb(var(--laser))]" />
         </li>
       </ul>
 

@@ -7,7 +7,7 @@ import { profile } from "@/data/profile";
 
 export default function Contact() {
   return (
-    <section id="contact" data-section="contact" className="relative pt-28 md:pt-44">
+    <section id="contact" data-section="contact" className="relative pt-16 md:pt-44">
       <div className="wrap">
         <SectionHead
           n="09"
@@ -35,29 +35,17 @@ export default function Contact() {
                 LinkedIn <span aria-hidden="true" className="arrow">↗</span>
               </a>
             </Magnetic>
-            <Magnetic strength={0.22}>
-              <a href={profile.resume.href} download={profile.resume.filename} className="btn">
-                Résumé <span aria-hidden="true" className="arrow">↓</span>
-              </a>
-            </Magnetic>
           </div>
         </Reveal>
 
-        <dl className="mt-20 grid gap-px bg-bone/10 sm:grid-cols-3 md:mt-28">
+        <dl className="mt-20 grid gap-px bg-bone/10 sm:grid-cols-2 md:mt-28">
           {[
             ["Currently", `${profile.role}, ${profile.org}`],
             ["Studying", `${profile.program}, ${profile.school} · ${profile.graduation}`],
-            ["Résumé", `${profile.resume.edition} · PDF`],
-          ].map(([k, v], i) => (
+          ].map(([k, v]) => (
             <div key={k} className="bg-ink p-6">
               <dt className="label mb-3">{k}</dt>
-              <dd className="text-[0.98rem] leading-snug text-bone">
-                {i === 2 ? (
-                  <a href={profile.resume.href} download={profile.resume.filename} className="link">{v} ↓</a>
-                ) : (
-                  v
-                )}
-              </dd>
+              <dd className="text-[0.98rem] leading-snug text-bone">{v}</dd>
             </div>
           ))}
         </dl>
@@ -69,7 +57,7 @@ export default function Contact() {
           <div className="mb-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
             <p className="label">© {new Date().getFullYear()} {profile.name} · Space engineering</p>
             <p className="label hidden md:block">Next.js · Three.js · GSAP · Lenis — designed &amp; built by hand</p>
-            <a href="#top" className="label link !text-bone">Back to top ↑</a>
+            <a href="#top" className="label link inline-flex min-h-11 items-center !text-bone">Back to top ↑</a>
           </div>
           <FitText className="footer-word h-display !leading-[0.82]" fill={0.995}>
             SARTHAK SAHAI

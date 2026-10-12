@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { fbm } from "@/lib/terrain";
 import { clamp, lerp, smoothstep } from "@/lib/math";
+import PointerText from "@/components/ui/PointerText";
 
 /* Illustrative ocean-colour model.
    A drifting "chlorophyll" field is swept by a pushbroom slit; the spectrum on the right is the
@@ -130,7 +131,7 @@ export default function OscarVisual() {
     const drawSpectrum = () => {
       const gx = clamp(Math.floor(sample.x * GW), 0, GW - 1), gy = clamp(Math.floor(sample.y * GH), 0, GH - 1);
       const c = field[gy * GW + gx];
-      const L = { l: 36, r: 14, t: 66, b: 52 };
+      const L = { l: 36, r: 14, t: pw < 520 ? 84 : 66, b: 52 };
       const w = pw - L.l - L.r, h = ph - L.t - L.b;
       pctx.clearRect(0, 0, pw, ph);
       const X = (l: number) => L.l + ((l - 400) / 300) * w;
@@ -139,7 +140,7 @@ export default function OscarVisual() {
       // grid
       pctx.strokeStyle = "rgba(236,231,219,0.08)";
       pctx.lineWidth = 1;
-      pctx.font = `10px var(--font-mono), monospace`;
+      pctx.font = `11px var(--font-mono), monospace`;
       pctx.fillStyle = "rgba(163,160,148,0.9)";
       pctx.textAlign = "center";
       for (const l of [400, 450, 500, 550, 600, 650, 700]) {
@@ -151,8 +152,8 @@ export default function OscarVisual() {
         pctx.beginPath(); pctx.moveTo(L.l, Y(r)); pctx.lineTo(L.l + w, Y(r)); pctx.stroke();
         pctx.fillText(r.toFixed(1), L.l - 6, Y(r) + 3);
       }
-      pctx.textAlign = "left";
-      pctx.fillText("nm", L.l + w - 10, L.t + h + 14);
+      pctx.textAlign = "right";
+      pctx.fillText("nm", L.l - 6, L.t + h + 29);
 
       // visible-spectrum strip
       const sg = pctx.createLinearGradient(L.l, 0, L.l + w, 0);
@@ -181,7 +182,7 @@ export default function OscarVisual() {
       pctx.strokeStyle = "rgb(255,120,80)"; pctx.lineWidth = 1.8; pctx.stroke(path);
 
       // band markers
-      pctx.font = `9.5px var(--font-mono), monospace`;
+      pctx.font = `11px var(--font-mono), monospace`;
       BANDS.forEach((b) => {
         const x = X(b), y = Y(reflect(b, c));
         pctx.strokeStyle = "rgba(236,231,219,0.22)"; pctx.lineWidth = 1; pctx.setLineDash([2, 3]);
@@ -250,12 +251,12 @@ export default function OscarVisual() {
   }, []);
 
   return (
-    <div ref={root} className="absolute inset-0 grid grid-rows-[1.15fr_1fr] gap-px bg-bone/10 sm:grid-cols-[1.05fr_1fr] sm:grid-rows-1">
+    <div ref={root} className="absolute inset-0 grid grid-rows-[1fr_1.25fr] gap-px bg-bone/10 sm:grid-cols-[1.05fr_1fr] sm:grid-rows-1">
       <div className="relative bg-ink" data-cursor="scan">
         <canvas ref={sceneCv} className="absolute inset-0 h-full w-full" aria-label="Simulated chlorophyll field swept by a pushbroom spectrometer slit" role="img" />
         <div className="pointer-events-none absolute left-4 top-4">
           <p className="label label-strong">Ocean scene · pushbroom slit</p>
-          <p className="label mt-1 !normal-case !tracking-normal">Hover to sample any pixel</p>
+          <p className="label mt-1 !normal-case !tracking-normal"><PointerText fine="Hover to sample any pixel" coarse="Tap the scene to sample a pixel" /></p>
         </div>
         <div className="pointer-events-none absolute bottom-3 left-4 right-4 flex items-center gap-3">
           <span className="label">Low</span>
@@ -271,11 +272,15 @@ export default function OscarVisual() {
             <p className="label label-strong">Sampled spectrum</p>
             <p className="label mt-1 !normal-case !tracking-normal">Reflectance vs wavelength</p>
           </div>
-          <dl className="text-right">
-            <dt className="label">Blue ÷ green</dt>
-            <dd className="h-display text-[1.5rem] leading-none tnum"><span ref={readBG}>0.00</span></dd>
-            <dt className="label mt-2">Chl index</dt>
-            <dd className="mono tnum text-[0.9rem] text-laser"><span ref={readC}>0.00</span></dd>
+          <dl className="flex gap-5 text-right sm:block">
+            <div>
+              <dt className="label">Blue ÷ green</dt>
+              <dd className="h-display text-[1.5rem] leading-none tnum"><span ref={readBG}>0.00</span></dd>
+            </div>
+            <div className="sm:mt-2">
+              <dt className="label">Chl index</dt>
+              <dd className="mono tnum text-[0.9rem] text-laser"><span ref={readC}>0.00</span></dd>
+            </div>
           </dl>
         </div>
       </div>

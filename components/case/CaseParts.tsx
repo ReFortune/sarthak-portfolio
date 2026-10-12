@@ -110,6 +110,7 @@ export function NextProject({ current }: { current: string }) {
   const cases = projects.filter((p) => p.caseStudy);
   const i = cases.findIndex((p) => p.slug === current);
   const next: Project = cases[(i + 1) % cases.length];
+  const prev: Project = cases[(i - 1 + cases.length) % cases.length];
   return (
     <section className="relative border-t border-bone/15 py-24 md:py-40">
       <div className="wrap">
@@ -131,9 +132,12 @@ export function NextProject({ current }: { current: string }) {
             </span>
           </span>
         </TLink>
-        <div className="mt-16 flex flex-wrap gap-6 border-t border-bone/10 pt-8">
-          <TLink href="/#projects" label="Projects" className="label link !text-bone">← All projects</TLink>
-          <TLink href="/#contact" label="Contact" className="label link !text-bone">Get in touch →</TLink>
+        <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-1 border-t border-bone/10 pt-6">
+          {prev.slug !== next.slug && (
+            <TLink href={`/projects/${prev.slug}`} label={prev.code} className="label link inline-flex min-h-11 items-center !text-bone">← Previous: {prev.code}</TLink>
+          )}
+          <TLink href="/#projects" label="Projects" className="label link inline-flex min-h-11 items-center !text-bone">All projects</TLink>
+          <TLink href="/#contact" label="Contact" className="label link inline-flex min-h-11 items-center !text-bone">Get in touch →</TLink>
         </div>
       </div>
     </section>

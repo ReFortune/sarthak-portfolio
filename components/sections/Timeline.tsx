@@ -63,7 +63,7 @@ export default function Timeline() {
   const active = rows.find((r) => r.id === hover);
 
   return (
-    <section id="timeline" data-section="timeline" className="relative py-28 md:py-44">
+    <section id="timeline" data-section="timeline" className="relative py-16 md:py-44">
       <div className="wrap">
         <SectionHead
           n="07"
@@ -121,17 +121,17 @@ export default function Timeline() {
                         href={r.href}
                         onFocus={() => setHover(r.id)}
                         onBlur={() => setHover(null)}
-                        className={`grid grid-cols-1 items-center gap-2 border-b border-bone/[0.07] px-4 py-3 transition-colors duration-300 md:grid-cols-[27%_1fr] md:gap-0 md:px-0 md:py-0 ${hover === r.id ? "bg-ink-3" : ""}`}
+                        className={`grid grid-cols-1 items-center gap-2 border-b border-bone/[0.07] px-4 py-3.5 transition-colors duration-300 md:grid-cols-[27%_1fr] md:gap-0 md:px-0 md:py-0 ${hover === r.id ? "bg-ink-3" : ""}`}
                         aria-label={`${r.label}, ${r.sub}: ${fmt(r.start)} to ${r.end ? fmt(r.end) : "present"}`}
                       >
                         <span className="md:px-5 md:py-3.5">
                           <span className="block text-[0.92rem] leading-tight text-bone">{r.label}</span>
                           <span className="label mt-0.5 block">{r.sub}</span>
                         </span>
-                        <span className="relative block h-5 md:h-full md:min-h-[3.6rem]">
+                        <span className="relative block h-6 md:h-full md:min-h-[3.6rem]">
                           <span
                             data-bar
-                            className={`absolute top-1/2 block -translate-y-1/2 ${isPoint ? "h-3.5 w-3.5 rotate-45" : "h-3.5 rounded-[2px]"} ${k.bar}`}
+                            className={`absolute top-1/2 block -translate-y-1/2 ${isPoint ? "h-4 w-4 rotate-45 md:h-3.5 md:w-3.5" : "h-4 rounded-[2px] md:h-3.5"} ${k.bar}`}
                             style={
                               isPoint
                                 ? { left: `calc(${pct(r.s)} - 7px)` }
@@ -157,7 +157,10 @@ export default function Timeline() {
                     {active.label} · {fmt(active.start)} → {active.end ? fmt(active.end) : "present"} · {active.months} mo
                   </>
                 ) : (
-                  "Hover a row · click to jump to it"
+                  <>
+                    <span className="[@media(pointer:coarse)]:hidden">Hover a row · click to jump to it</span>
+                    <span className="hidden [@media(pointer:coarse)]:inline">Tap a row to jump to it</span>
+                  </>
                 )}
               </p>
               <ul className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Legend">

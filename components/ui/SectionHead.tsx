@@ -19,7 +19,7 @@ export default function SectionHead({
   size?: "md" | "lg";
 }) {
   return (
-    <header className={`mb-14 md:mb-20 ${className}`}>
+    <header className={`mb-10 md:mb-20 ${className}`}>
       <Reveal className="flex items-center justify-between border-t border-bone/15 pt-4">
         <p className="label label-strong flex items-center gap-3">
           <span className="text-laser tnum">{n}</span>

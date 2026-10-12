@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import SectionHead from "../ui/SectionHead";
 import Reveal from "../ui/Reveal";
 import { skillClusters } from "@/data/skills";
+import PointerText from "@/components/ui/PointerText";
 
 type Align = "r" | "l" | "t" | "b";
 type Star = { id: string; label: string; x: number; y: number; a: Align; clusters: string[] };
@@ -68,11 +69,11 @@ export default function Toolkit() {
   const clusterOf = useMemo(() => Object.fromEntries(skillClusters.map((c) => [c.id, c])), []);
 
   return (
-    <section id="toolkit" data-section="toolkit" className="relative py-28 md:py-44">
+    <section id="toolkit" data-section="toolkit" className="relative py-16 md:py-44">
       <div className="wrap">
         <SectionHead
           n="06"
-          label="Toolkit"
+          label="Skills"
           title={
             <>
               Four disciplines, <span className="serif">one system</span>
@@ -179,7 +180,7 @@ export default function Toolkit() {
                 return (
                   <span
                     key={s.id}
-                    className="absolute whitespace-nowrap font-mono text-[0.62rem] uppercase tracking-[0.1em] transition-[color,opacity] duration-500 xl:text-[0.66rem]"
+                    className="absolute whitespace-nowrap font-mono text-[0.7rem] uppercase tracking-[0.08em] transition-[color,opacity] duration-500 xl:text-[0.72rem]"
                     style={{
                       left: `${s.x / 10}%`,
                       top: `${s.y / 6}%`,
@@ -205,7 +206,7 @@ export default function Toolkit() {
                   type="button"
                   tabIndex={-1}
                   onMouseEnter={() => setCluster(c.id)}
-                  className={`absolute font-mono text-[0.62rem] uppercase tracking-[0.14em] transition-colors ${cluster === c.id ? "text-laser" : "text-bone-mute"}`}
+                  className={`absolute font-mono text-[0.7rem] uppercase tracking-[0.12em] transition-colors ${cluster === c.id ? "text-laser" : "text-bone-mute"}`}
                   style={{ left: `${c.x}%`, top: `${c.y}%`, transform: "translateY(-50%)" }}
                 >
                   {c.t}
@@ -213,7 +214,7 @@ export default function Toolkit() {
               ))}
             </div>
             <p className="label mt-3 flex justify-between gap-4">
-              <span>{cluster ? `${clusterOf[cluster].name} — ${clusterOf[cluster].skills.length} skills` : "Hover a constellation or a skill"}</span>
+              <span>{cluster ? `${clusterOf[cluster].name} — ${clusterOf[cluster].skills.length} skills` : <PointerText fine="Hover a constellation or a skill" coarse="Tap a constellation or a skill" />}</span>
               <span className="hidden xl:inline">Dashed ring = appears in two groups</span>
             </p>
           </Reveal>

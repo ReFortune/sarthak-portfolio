@@ -101,14 +101,14 @@ export function PowerBudget() {
         </div>
         {/* 3.7 W held peak */}
         <span className="absolute inset-y-[-10px] w-px bg-laser" style={{ left: `${(3.7 / BUDGET) * 100}%` }}>
-          <span className="label absolute -top-6 left-2 whitespace-nowrap !text-laser">3.7 W held peak</span>
+          <span className="label absolute -top-6 right-2 whitespace-nowrap !text-laser sm:left-2 sm:right-auto">3.7 W held peak</span>
         </span>
         {/* 4 W budget */}
         <span className="absolute inset-y-[-10px] right-0 w-px bg-bone">
-          <span className="label absolute -top-6 right-0 whitespace-nowrap !text-bone">4 W budget</span>
+          <span className="label absolute right-0 top-full mt-1 whitespace-nowrap !text-bone sm:-top-6 sm:mt-0">4 W budget</span>
         </span>
       </div>
-      <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-2">
+      <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-2 sm:mt-6">
         {parts.map((p) => (
           <li key={p.k} className="label flex items-center gap-2.5">
             <span className={`inline-block h-2.5 w-2.5 ${p.c}`} />

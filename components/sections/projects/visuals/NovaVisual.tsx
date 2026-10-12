@@ -72,7 +72,7 @@ export default function NovaVisual() {
   }, []);
 
   return (
-    <div ref={root} className="grid h-full grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]">
+    <div ref={root} className="grid h-full grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]">
       {/* ── altitude column ── */}
       <div className="relative border-r border-bone/10">
         <svg viewBox="0 0 300 700" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" role="img" aria-label="Balloon ascending from the ground to 40 kilometres; the sky darkens and stars appear with altitude">
@@ -132,21 +132,21 @@ export default function NovaVisual() {
             <rect x="-9" y="84" width="18" height="13" fill="none" stroke="#fff" strokeOpacity="0.5" />
           </g>
         </svg>
-        <div className="pointer-events-none absolute bottom-10 left-4">
+        <div className="pointer-events-none absolute bottom-4 left-3 sm:bottom-10 sm:left-4">
           <p className="label">Altitude</p>
-          <p className="h-display mt-1 text-[clamp(1.6rem,2.6vw,2.4rem)] normal-case">
+          <p className="h-display mt-1 text-[clamp(1.2rem,2.6vw,2.4rem)] normal-case">
             <span ref={readout} className="tnum">0.0 km</span>
           </p>
         </div>
-        <p className="label pointer-events-none absolute bottom-3 left-4 right-4 !normal-case !tracking-normal !text-bone/70">
+        <p className="label pointer-events-none absolute bottom-3 left-4 right-4 hidden !normal-case !tracking-normal !text-bone/70 sm:block">
           Stratospheric balloon · RSOnar III
         </p>
       </div>
 
       {/* ── instruments ── */}
       <div className="flex min-h-0 flex-col">
-        <div className="grid grid-cols-[auto_1fr] items-center gap-5 border-b border-bone/10 p-4 md:gap-7 md:p-6">
-          <div className="relative h-[8.5rem] w-[8.5rem] shrink-0 md:h-40 md:w-40">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-bone/10 p-3 sm:gap-5 sm:p-4 md:gap-7 md:p-6">
+          <div className="relative h-24 w-24 shrink-0 sm:h-[8.5rem] sm:w-[8.5rem] md:h-40 md:w-40">
             <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90" role="img" aria-label="Average peak power 3.7 watts against a 4 watt budget">
               <circle cx="80" cy="80" r="62" fill="none" stroke="rgb(236 231 219)" strokeOpacity="0.12" strokeWidth="9" />
               <circle ref={ring} cx="80" cy="80" r="62" fill="none" stroke="rgb(255 91 46)" strokeWidth="9" strokeLinecap="butt" />
@@ -155,14 +155,15 @@ export default function NovaVisual() {
             </svg>
             <div className="absolute inset-0 grid place-items-center text-center">
               <div>
-                <p className="h-display text-[1.9rem] leading-none md:text-[2.2rem]">3.7<span className="serif text-[0.5em] text-bone-dim"> W</span></p>
+                <p className="h-display text-[1.45rem] leading-none sm:text-[1.9rem] md:text-[2.2rem]">3.7<span className="serif text-[0.5em] text-bone-dim"> W</span></p>
                 <p className="label mt-1.5">of 4 W</p>
               </div>
             </div>
           </div>
           <div>
             <p className="label mb-2">Avionics power · peak</p>
-            <p className="text-[0.88rem] leading-snug text-bone-dim">
+            <p className="text-[0.88rem] leading-snug text-bone-dim sm:hidden">5 V rail · &gt;15 h continuous · zero image-data loss</p>
+            <p className="hidden text-[0.88rem] leading-snug text-bone-dim sm:block">
               5 V rail, held under budget by disabling unused BeagleBone Black Industrial peripherals and retuning exposure rates. &gt;15 h continuous, zero image-data loss.
             </p>
           </div>

@@ -1,5 +1,6 @@
 import Hero from "@/components/hero/Hero";
 import Ticker from "@/components/sections/Ticker";
+import Proof from "@/components/sections/Proof";
 import Profile from "@/components/sections/Profile";
 import Experience from "@/components/sections/Experience";
 import Projects from "@/components/sections/Projects";
@@ -15,6 +16,7 @@ export default function Home() {
     <main id="main">
       <Hero />
       <Ticker />
+      <Proof />
       <Profile />
       <Experience />
       <Projects />

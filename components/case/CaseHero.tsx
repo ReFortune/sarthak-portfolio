@@ -10,7 +10,7 @@ export default function CaseHero({ p }: { p: Project }) {
     <header className="relative pb-16 pt-28 md:pb-24 md:pt-32">
       <div className="wrap">
         <Reveal className="mb-10 flex items-center justify-between gap-6 md:mb-14">
-          <TLink href="/#projects" label="Projects" className="label link !text-bone">
+          <TLink href="/#projects" label="Projects" className="label link inline-flex min-h-11 items-center !text-bone">
             ← All projects
           </TLink>
           <p className="label tnum hidden sm:block">
@@ -31,6 +31,14 @@ export default function CaseHero({ p }: { p: Project }) {
                 {p.code}
               </SplitReveal>
               <p className="serif mt-5 text-[clamp(1.3rem,2.1vw,2rem)] leading-tight text-bone-dim">{p.name}</p>
+              <ul aria-label="Results" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 border-y border-bone/10 py-4">
+                {p.metrics.slice(0, 3).map((m) => (
+                  <li key={m.label} className="flex items-baseline gap-2.5">
+                    <span className="h-display text-[1.35rem] leading-none text-bone">{m.value}</span>
+                    <span className="label !leading-snug">{m.label}</span>
+                  </li>
+                ))}
+              </ul>
               <Reveal delay={0.2}>
                 <p className="lede mt-8 max-w-xl">{p.summary}</p>
               </Reveal>
@@ -54,7 +62,7 @@ export default function CaseHero({ p }: { p: Project }) {
           </div>
 
           <Reveal className="lg:col-span-7" y={60} delay={0.15}>
-            <div className={`window ticks relative ${p.visual === "planner" ? "h-[min(88svh,54rem)] min-h-[46rem]" : "h-[min(74svh,41rem)] min-h-[30rem]"}`}>
+            <div className={`window ticks relative ${p.visual === "planner" ? "h-[min(88svh,54rem)] min-h-[46rem]" : p.visual === "chiron" ? "h-[min(74svh,41rem)] min-h-[46rem] sm:min-h-[34rem]" : p.visual === "oscar" ? "h-[min(74svh,41rem)] min-h-[34rem]" : "h-[min(74svh,41rem)] min-h-[30rem]"}`}>
               <div className="absolute inset-0 flex flex-col">
                 <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
                   <p className="label label-strong">{p.visual === "planner" ? "Illustrative demo" : "Instrument"} · {p.code}</p>

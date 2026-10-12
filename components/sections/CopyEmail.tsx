@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import PointerText from "@/components/ui/PointerText";
 
 /** The address as the page's loudest element. Click to copy; a real mailto link sits beside it. */
 export default function CopyEmail({ email }: { email: string }) {
@@ -37,7 +38,7 @@ export default function CopyEmail({ email }: { email: string }) {
         className="group block max-w-full text-left"
       >
         <span className="label mb-4 flex items-center gap-3">
-          Email <span aria-hidden="true">—</span> click to copy
+          Email <span aria-hidden="true">—</span> <PointerText fine="click to copy" coarse="tap to copy" />
         </span>
         <span className="h-display link block max-w-full overflow-hidden text-ellipsis text-[clamp(1.2rem,4.4vw,4.6rem)] normal-case !leading-[1.05] tracking-[-0.03em]">
           {email}

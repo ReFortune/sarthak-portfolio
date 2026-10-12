@@ -14,8 +14,8 @@
   --ink-3: 16 19 27;
   --ink-4: 24 28 39;
   --bone: 236 231 219;
-  --bone-dim: 163 160 148;
-  --bone-mute: 124 122 115;
+  --bone-dim: 178 175 163;
+  --bone-mute: 152 149 139;
   --laser: 255 91 46;
   --ice: 169 216 255;
   --paper: 233 229 218;
@@ -169,9 +169,9 @@ html.lenis body {
 }
 .label {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.4;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(var(--bone-dim));
   font-variation-settings: normal;
@@ -249,10 +249,10 @@ html.lenis body {
   border-radius: 999px;
   border: 1px solid rgb(var(--bone) / 0.3);
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
@@ -289,7 +289,7 @@ html.lenis body {
 }
 .btn--sm {
   padding: 0.7rem 1.05rem;
-  font-size: 0.66rem;
+  font-size: 0.72rem;
 }
 .btn .arrow {
   display: inline-block;
@@ -314,12 +314,12 @@ html.lenis body {
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.36rem 0.7rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgb(var(--bone) / 0.16);
+  border: 1px solid rgb(var(--bone) / 0.2);
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: rgb(var(--bone-dim));
   white-space: nowrap;
@@ -387,6 +387,30 @@ input[type="range"].slider::-moz-range-thumb {
 }
 }
 
+@media (pointer: coarse) {
+  input[type="range"].slider {
+    height: 44px;
+  }
+  input[type="range"].slider::-webkit-slider-thumb {
+    margin-top: -6px;
+  }
+}
+
+/* Touch: small controls keep their look but get a 44px-ish hit area (an invisible halo around each button) */
+@media (pointer: coarse) {
+  button:not(.absolute):not(.fixed):not(.sticky):not(.btn):not([style*="position"]) {
+    position: relative;
+  }
+  button:not(.btn)::after {
+    content: "";
+    position: absolute;
+    inset: -8px -6px;
+  }
+  button {
+    touch-action: manipulation;
+  }
+}
+
 /* Fine film grain over everything (static tile, only its offset animates) */
 .grain {
   position: fixed;
@@ -427,7 +451,10 @@ input[type="range"].slider::-moz-range-thumb {
   top: 12px;
   left: 12px;
   z-index: 200;
-  padding: 0.7rem 1rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
   background: rgb(var(--laser));
   color: rgb(var(--ink));
   font-family: var(--font-mono), monospace;
@@ -701,12 +728,12 @@ html[data-booted="1"] .preloader {
 }
 .lab-label b {
   font-weight: 400;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   color: rgb(var(--laser));
 }
 .lab-label span {
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(var(--bone-dim));

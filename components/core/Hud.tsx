@@ -4,12 +4,12 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { ScrollTrigger } from "@/lib/gsap";
 import { chapterStore, sectionStore, useStore } from "@/lib/store";
-import { profile, sections } from "@/data/profile";
+import { sections } from "@/data/profile";
 
 /**
- * Instrument HUD — four viewfinder ticks, a section + progress readout (bottom-left)
- * and a live local clock (bottom-right). Also the single owner of "which section
- * is active", which the header and menu read from `sectionStore`.
+ * Instrument HUD — four viewfinder ticks and a section + progress readout (bottom-left).
+ * Also the single owner of "which section is active", which the header and menu read
+ * from `sectionStore`.
  */
 export default function Hud() {
   const pathname = usePathname();
@@ -17,8 +17,6 @@ export default function Hud() {
   const section = useStore(sectionStore);
   const chapter = useStore(chapterStore);
   const bar = useRef<HTMLSpanElement>(null);
-  const pct = useRef<HTMLSpanElement>(null);
-  const clock = useRef<HTMLSpanElement>(null);
 
   /* active-section tracking (home only) */
   useEffect(() => {
@@ -86,7 +84,6 @@ export default function Hud() {
       const max = h.scrollHeight - h.clientHeight;
       const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
       if (bar.current) bar.current.style.transform = `scaleX(${p})`;
-      if (pct.current) pct.current.textContent = `${String(Math.round(p * 100)).padStart(3, "0")}%`;
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -97,33 +94,12 @@ export default function Hud() {
     };
   }, [pathname]);
 
-  /* local clock */
-  useEffect(() => {
-    const fmt = new Intl.DateTimeFormat("en-CA", {
-      timeZone: profile.timezone,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-    const tz = new Intl.DateTimeFormat("en-CA", { timeZone: profile.timezone, timeZoneName: "short" });
-    const tick = () => {
-      if (!clock.current) return;
-      const now = new Date();
-      const zone = tz.formatToParts(now).find((p) => p.type === "timeZoneName")?.value ?? "";
-      clock.current.textContent = `${fmt.format(now)} ${zone}`;
-    };
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
   const s = sections.find((x) => x.id === section.id);
 
   return (
     <>
       {/* fade scrims: scrolling content dissolves under the header / HUD instead of colliding with it */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[54] h-24 bg-gradient-to-b from-ink via-ink/60 to-transparent md:h-28" />
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[54] h-28 bg-gradient-to-b from-ink from-35% via-ink/80 to-transparent md:h-32" />
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[54] hidden h-16 bg-gradient-to-t from-ink via-ink/55 to-transparent md:block" />
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[55] text-white mix-blend-difference">
       {/* viewfinder ticks */}
@@ -141,14 +117,6 @@ export default function Hud() {
         </span>
         <span className="relative block h-px w-24 bg-white/20">
           <span ref={bar} className="absolute inset-0 origin-left scale-x-0 bg-white" />
-        </span>
-        <span ref={pct} className="label !text-white/60 tnum">000%</span>
-      </div>
-
-      {/* bottom-right: clock */}
-      <div className="absolute bottom-5 right-[var(--gutter)] hidden md:block">
-        <span className="label !text-white/80 tnum">
-          ET · <span ref={clock}>--:--:--</span>
         </span>
       </div>
     </div>

@@ -12,7 +12,7 @@ const les = leadership.find((l) => l.id === "les")!;
 
 export default function Leadership() {
   return (
-    <section id="leadership" data-section="leadership" className="relative py-28 md:py-44">
+    <section id="leadership" data-section="leadership" className="relative py-16 md:py-44">
       <div className="wrap">
         <SectionHead
           n="04"
@@ -90,7 +90,7 @@ export default function Leadership() {
         </article>
 
         {/* ───────── GNCTR ───────── */}
-        <article aria-labelledby="gnctr-title" className="mt-32 md:mt-48">
+        <article aria-labelledby="gnctr-title" className="mt-24 md:mt-48">
           <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="label mb-5 flex flex-wrap items-center gap-3">
@@ -147,7 +147,7 @@ export default function Leadership() {
         </article>
 
         {/* ───────── Lassonde Engineering Society ───────── */}
-        <article aria-labelledby="les-title" className="mt-32 md:mt-48">
+        <article aria-labelledby="les-title" className="mt-24 md:mt-48">
           <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="label mb-5 flex flex-wrap items-center gap-3">

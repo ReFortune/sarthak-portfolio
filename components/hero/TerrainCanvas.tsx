@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { bootStore, cursorReadout, markBoot, planReadout } from "@/lib/store";
+import { bootStore, cursorReadout, heroViewShift, markBoot, planReadout } from "@/lib/store";
 import type { TerrainScene } from "./terrainScene";
 
 type Props = {
@@ -56,6 +56,7 @@ export default function TerrainCanvas({ scrollRef, className, introReady = true,
           reduced,
           lowPower,
           onPlan: (p) => planReadout.set(p),
+          getViewShift: () => heroViewShift.get(),
           onReady: () => {
             markBoot("scene");
             canvas.style.opacity = "1";
@@ -81,6 +82,7 @@ export default function TerrainCanvas({ scrollRef, className, introReady = true,
       const ro = new ResizeObserver(() => scene?.resize());
       ro.observe(el);
       cleanups.push(() => ro.disconnect());
+      cleanups.push(heroViewShift.subscribe(() => scene?.resize()));
 
       if (reduced) return;
 

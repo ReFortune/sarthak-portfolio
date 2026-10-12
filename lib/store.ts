@@ -69,5 +69,8 @@ export type PlanReadout = {
 };
 export const planReadout = createStore<PlanReadout | null>(null);
 
+/** Portrait screens: how far (fraction of the hero height) the terrain scene is pushed down so the route sits between the copy and the name. Measured by the hero. */
+export const heroViewShift = createStore<number>(0.2);
+
 /** Menu overlay open state. */
 export const menuStore = createStore<boolean>(false);

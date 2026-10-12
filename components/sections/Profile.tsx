@@ -33,11 +33,11 @@ const facts: [string, string][] = [
 
 export default function Profile() {
   return (
-    <section id="profile" data-section="profile" className="relative py-28 md:py-44">
+    <section id="profile" data-section="profile" className="relative py-16 md:py-44">
       <div className="wrap">
         <SectionHead
           n="01"
-          label="Profile"
+          label="About"
           title={
             <>
               Hello, I’m <span className="serif">Sarthak.</span>

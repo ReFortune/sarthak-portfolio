@@ -6,13 +6,13 @@ import { useGsap } from "@/lib/hooks";
 
 /**
  * Words brighten one by one as the block scrolls through the viewport (scrubbed, reversible).
- * Unread words start at 42 % opacity — still ≥ 3:1 against the page for large type.
+ * Unread words start at 72 % opacity — comfortably readable before the highlight reaches them.
  */
 export default function ScrubText({
   as: Tag = "p",
   children,
   className = "",
-  from = 0.42,
+  from = 0.72,
 }: {
   as?: ElementType;
   children: ReactNode;
@@ -36,7 +36,7 @@ export default function ScrubText({
             opacity: 1,
             ease: "none",
             stagger: 0.12,
-            scrollTrigger: { trigger: el, start: "top 82%", end: "bottom 52%", scrub: 0.6 },
+            scrollTrigger: { trigger: el, start: "top 90%", end: "bottom 60%", scrub: 0.6 },
           }
         );
       },
