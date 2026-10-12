@@ -704,8 +704,8 @@ export default function PlannerVisual() {
               {/* a plan that fails says why, on the map */}
               {result && !result.ok && (
                 <div role="alert" className="pointer-events-none absolute left-2 top-2 max-w-[66%] border border-laser/70 bg-ink/90 px-2.5 py-2 backdrop-blur-sm md:left-3 md:top-3 md:px-3">
-                  <p className="label !text-[0.72rem] !text-laser">No route</p>
-                  <p className="label mt-1 !text-[0.72rem] !leading-snug !text-bone">{result.reason}</p>
+                  <p className="label !text-[0.75rem] !text-laser">No route</p>
+                  <p className="label mt-1 !text-[0.75rem] !leading-snug !text-bone">{result.reason}</p>
                 </div>
               )}
 
@@ -714,30 +714,30 @@ export default function PlannerVisual() {
 
               {/* legend */}
               <div className="pointer-events-none absolute bottom-2 left-2 flex flex-wrap items-center gap-x-3 gap-y-1 border border-bone/20 bg-ink/88 px-2.5 py-1.5 backdrop-blur-sm md:bottom-3 md:left-3">
-                <span className="label flex items-center gap-1.5 !text-[0.72rem] !text-bone">
+                <span className="label flex items-center gap-1.5 !text-[0.75rem] !text-bone">
                   <i className="block h-0.5 w-4" style={{ background: "rgb(169 216 255)" }} />
                   Fastest
                 </span>
-                <span className="label flex items-center gap-1.5 !text-[0.72rem] !text-bone">
+                <span className="label flex items-center gap-1.5 !text-[0.75rem] !text-bone">
                   <i className="block h-0.5 w-4" style={{ background: "rgb(236 231 219)" }} />
                   Safest
                 </span>
                 {overlay === "slope" && (
                   <>
-                    <span className="label flex items-center gap-1.5 !text-[0.72rem] !text-bone"><i className="block h-2 w-2" style={{ background: "rgb(240 184 92)" }} />≤ 25°</span>
-                    <span className="label flex items-center gap-1.5 !text-[0.72rem] !text-bone"><i className="block h-2 w-2" style={{ background: "rgb(255 91 46)" }} />No-go</span>
+                    <span className="label flex items-center gap-1.5 !text-[0.75rem] !text-bone"><i className="block h-2 w-2" style={{ background: "rgb(240 184 92)" }} />≤ 25°</span>
+                    <span className="label flex items-center gap-1.5 !text-[0.75rem] !text-bone"><i className="block h-2 w-2" style={{ background: "rgb(255 91 46)" }} />No-go</span>
                   </>
                 )}
                 {overlay === "sun" && (
                   <>
-                    <span className="label flex items-center gap-1.5 !text-[0.72rem] !text-bone"><i className="block h-2 w-2 border border-bone/40 bg-[#060a1e]" />Shadow</span>
-                    <span ref={clockEl} className="label tnum !text-[0.72rem] !text-bone">T+0:00</span>
+                    <span className="label flex items-center gap-1.5 !text-[0.75rem] !text-bone"><i className="block h-2 w-2 border border-bone/40 bg-[#060a1e]" />Shadow</span>
+                    <span ref={clockEl} className="label tnum !text-[0.75rem] !text-bone">T+0:00</span>
                   </>
                 )}
               </div>
 
               {notice && (
-                <p role="status" className="label absolute bottom-2 right-2 max-w-[60%] border border-laser/60 bg-ink/85 px-2.5 py-1.5 !text-[0.72rem] !normal-case !tracking-normal !text-bone md:bottom-3 md:right-3">
+                <p role="status" className="label absolute bottom-2 right-2 max-w-[60%] border border-laser/60 bg-ink/85 px-2.5 py-1.5 !text-[0.75rem] !normal-case !tracking-normal !text-bone md:bottom-3 md:right-3">
                   {notice}
                 </p>
               )}
@@ -784,7 +784,7 @@ export default function PlannerVisual() {
               ["Explored", result ? fmtInt(result.stats.explored) : "—"],
             ].map(([k, v]) => (
               <div key={k} className={["Steepest", "Sunlit", "Explored"].includes(k) ? "hidden sm:block" : undefined}>
-                <dt className="label !text-[0.72rem]">{k}</dt>
+                <dt className="label !text-[0.75rem]">{k}</dt>
                 <dd className={`mono tnum mt-0.5 text-[0.8rem] ${k === "Distance" ? "!text-[0.95rem] text-laser" : "text-bone"}`}>{v}</dd>
               </div>
             ))}
@@ -828,7 +828,7 @@ export default function PlannerVisual() {
             )}
           </div>
         </div>
-        <p className="label mt-1.5 flex flex-wrap items-center justify-between gap-x-4 !text-[0.72rem] !normal-case !tracking-normal !text-bone-mute">
+        <p className="label mt-1.5 flex flex-wrap items-center justify-between gap-x-4 !text-[0.75rem] !normal-case !tracking-normal !text-bone-mute">
           <span>Height along the route · amber strip = in sunlight · red ticks = waiting for light</span>
           {other && other.ok && st && (
             <span className="tnum !text-bone-dim">
@@ -954,7 +954,7 @@ export default function PlannerVisual() {
             </button>
           </div>
 
-          <p className="label !text-[0.72rem] !normal-case !tracking-normal !text-bone-mute">
+          <p className="label !text-[0.75rem] !normal-case !tracking-normal !text-bone-mute">
             <span className="sm:hidden">Illustrative demo · synthetic terrain · </span>
             <span className="hidden sm:inline">
               Illustrative demo · synthetic terrain, not mission data · the sun swings far faster than real ·{" "}

@@ -130,7 +130,7 @@ export default function SparrowVisual() {
           </g>
 
           {/* interface callout */}
-          <g className="max-sm:hidden" fontFamily="var(--font-mono)" fontSize="9.5" letterSpacing="1.4" fill="rgb(163 160 148)">
+          <g className="max-sm:hidden" fontFamily="var(--font-mono)" fontSize="11" letterSpacing="1.2" fill="rgb(163 160 148)">
             <line x1={CX + 44} y1={PLATE_Y + 4} x2={CX + 100} y2={PLATE_Y + 26} stroke="rgb(163 160 148)" strokeOpacity="0.6" />
             <text x={CX + 104} y={PLATE_Y + 32}>COMMON MOUNT PLATE</text>
             <text x={CX + 104} y={PLATE_Y + 45}>+ CONNECTOR · NO REWORK</text>

@@ -1,4 +1,5 @@
 import Marquee from "../ui/Marquee";
+import TickerPause from "./TickerPause";
 import { ticker } from "@/data/profile";
 
 /** Headline figures scrolling past — every value comes straight from the résumé. */
@@ -14,6 +15,7 @@ export default function Ticker() {
           </div>
         ))}
       </Marquee>
+      <TickerPause />
     </section>
   );
 }

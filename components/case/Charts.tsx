@@ -36,7 +36,8 @@ export function PsdChart() {
 
   return (
     <figure>
-      <svg ref={root} viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Power spectral density against frequency from 0 to 2000 hertz, peaking at 0.04 g squared per hertz between 80 and 500 hertz">
+      <div className="-mx-1 overflow-x-auto px-1 [-webkit-overflow-scrolling:touch]">
+      <svg ref={root} viewBox={`0 0 ${W} ${H}`} className="w-full max-sm:min-w-[640px] max-sm:[&_text]:[font-size:12.5px]" role="img" aria-label="Power spectral density against frequency from 0 to 2000 hertz, peaking at 0.04 g squared per hertz between 80 and 500 hertz">
         <defs>
           <linearGradient id="psd-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="rgb(255 91 46)" stopOpacity="0.35" />
@@ -67,6 +68,7 @@ export function PsdChart() {
           <text x={(x(80) + x(500)) / 2} y={y(0.04) - 18} textAnchor="middle" letterSpacing="1">PLATEAU 0.04 g²/Hz · 80–500 Hz</text>
         </g>
       </svg>
+      </div>
       <figcaption className="label mt-3 flex flex-wrap justify-between gap-x-6 gap-y-1 !normal-case !tracking-normal">
         <span>The report’s table: 0–2000 Hz profile, applied with a 10 G load case.</span>
         <span className="tnum">≈ {GRMS.toFixed(1)} g RMS overall (trapezoidal integration of the table)</span>

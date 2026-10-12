@@ -52,7 +52,7 @@ export default function Contact() {
       </div>
 
       {/* ── footer ── */}
-      <footer className="relative mt-24 overflow-hidden border-t border-bone/10 pb-6 pt-8 md:mt-32">
+      <footer role="contentinfo" className="relative mt-24 overflow-hidden border-t border-bone/10 pb-6 pt-8 md:mt-32">
         <div className="wrap">
           <div className="mb-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
             <p className="label">© {new Date().getFullYear()} {profile.name} · Space engineering</p>

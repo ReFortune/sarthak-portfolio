@@ -136,8 +136,8 @@ export default function TrussBridge() {
             <path d={`M${X0} 250v12M${X0 + SPAN} 250v12`} />
             <path d={`M${X0 + 8} 252l-8 4 8 4M${X0 + SPAN - 8} 252l8 4-8 4`} />
           </g>
-          <rect x={X0 + SPAN / 2 - 44} y="244" width="88" height="22" fill="rgb(11 13 19)" />
-          <text x={X0 + SPAN / 2} y="260" textAnchor="middle" fill="rgb(236 231 219)" fontFamily="var(--font-mono)" fontSize="16" letterSpacing="1.5">20 FT</text>
+          <rect className="max-sm:hidden" x={X0 + SPAN / 2 - 44} y="244" width="88" height="22" fill="rgb(11 13 19)" />
+          <text className="max-sm:hidden" x={X0 + SPAN / 2} y="260" textAnchor="middle" fill="rgb(236 231 219)" fontFamily="var(--font-mono)" fontSize="16" letterSpacing="1.5">20 FT</text>
         </svg>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
@@ -149,12 +149,12 @@ export default function TrussBridge() {
           <svg width="150" height="34" viewBox="0 0 150 34" aria-hidden="true" className="shrink-0">
             <g fill="none" stroke="rgb(236 231 219)" strokeOpacity={mode === "flat" ? 1 : 0.3} style={{ transition: "stroke-opacity .4s" }}>
               <rect x="6" y="13" width="44" height="8" fill="rgb(236 231 219)" fillOpacity="0.25" />
-              <text x="6" y="31" fill="rgb(163 160 148)" stroke="none" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.6">FLAT</text>
+              <text x="6" y="31" fill="rgb(163 160 148)" stroke="none" fontFamily="var(--font-mono)" fontSize="11" letterSpacing="0.5">FLAT</text>
             </g>
             <g fill="none" stroke="rgb(255 91 46)" strokeOpacity={mode === "truss" ? 1 : 0.3} style={{ transition: "stroke-opacity .4s" }}>
               <path d="M88 6 L112 6 L100 25 Z" />
               <path d="M94 6 L100 25 M106 6 L100 25 M91 12 L109 12" strokeWidth="0.8" />
-              <text x="88" y="33" fill="rgb(163 160 148)" stroke="none" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.6">TRUSS</text>
+              <text x="88" y="33" fill="rgb(163 160 148)" stroke="none" fontFamily="var(--font-mono)" fontSize="11" letterSpacing="0.5">TRUSS</text>
             </g>
           </svg>
         </div>

@@ -131,7 +131,7 @@ export default function OscarVisual() {
     const drawSpectrum = () => {
       const gx = clamp(Math.floor(sample.x * GW), 0, GW - 1), gy = clamp(Math.floor(sample.y * GH), 0, GH - 1);
       const c = field[gy * GW + gx];
-      const L = { l: 36, r: 14, t: pw < 520 ? 84 : 66, b: 52 };
+      const L = { l: 36, r: 14, t: pw < 400 ? 100 : pw < 520 ? 84 : 66, b: 52 };
       const w = pw - L.l - L.r, h = ph - L.t - L.b;
       pctx.clearRect(0, 0, pw, ph);
       const X = (l: number) => L.l + ((l - 400) / 300) * w;
@@ -256,7 +256,7 @@ export default function OscarVisual() {
         <canvas ref={sceneCv} className="absolute inset-0 h-full w-full" aria-label="Simulated chlorophyll field swept by a pushbroom spectrometer slit" role="img" />
         <div className="pointer-events-none absolute left-4 top-4">
           <p className="label label-strong">Ocean scene · pushbroom slit</p>
-          <p className="label mt-1 !normal-case !tracking-normal"><PointerText fine="Hover to sample any pixel" coarse="Tap the scene to sample a pixel" /></p>
+          <p className="label mt-1 inline-block bg-ink/70 px-1.5 py-0.5 !normal-case !tracking-normal !text-bone"><PointerText fine="Hover to sample any pixel" coarse="Tap the scene to sample a pixel" /></p>
         </div>
         <div className="pointer-events-none absolute bottom-3 left-4 right-4 flex items-center gap-3">
           <span className="label">Low</span>

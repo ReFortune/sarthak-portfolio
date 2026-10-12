@@ -217,12 +217,12 @@ export default function Hero() {
         <div className="grid items-start gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <div className="hero-fade mb-6 space-y-2 sm:mb-8">
-              <p className="label label-strong !text-[0.8rem] !leading-relaxed !text-bone sm:!text-[0.85rem]">
+              <p className="label label-strong text-balance !text-[0.8rem] !leading-relaxed !text-bone sm:!text-[0.85rem]">
                 <span className="mr-3 inline-block h-1.5 w-1.5 shrink-0 -translate-y-px rounded-full bg-laser [animation:blink_1.4s_infinite]" />
                 {profile.role}<span className="mx-2 hidden text-bone-mute sm:inline">·</span><br className="sm:hidden" />{profile.org}
               </p>
               <p className="label !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
-                {profile.program}, {profile.school}
+                {profile.program}, {profile.school} <span className="text-bone-mute">·</span> {profile.graduation}
               </p>
               <p className="label label-strong !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
                 <span aria-hidden="true" className="mr-2 inline-block h-1 w-1 -translate-y-px rounded-full bg-ice align-middle" />
@@ -281,8 +281,9 @@ function ScanPanel({ className = "" }: { className?: string }) {
     return () => window.clearInterval(id);
   }, []);
 
-  /* points counter */
+  /* points counter (static under reduced motion) */
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let last = gsap.ticker.time; // seconds, the same clock the ticker hands to `tick`
     const pps = m.rate * pointsPerScan(m.inc);
     const tick = (now: number) => {

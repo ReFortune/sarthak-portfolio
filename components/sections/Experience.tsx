@@ -80,7 +80,7 @@ export default function Experience() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-4 border border-dashed border-bone/25 px-4 py-3 text-bone-mute">
                   <span className="text-sm line-through decoration-laser decoration-2">Contracted third-party scanning service</span>
-                  <span className="label">Replaced</span>
+                  <span className="label">Replaceable in-house</span>
                 </div>
                 <ol className="grid grid-cols-3 gap-2">
                   {["Scanning module", "Python processing pipeline", "Point-cloud viewer"].map((step, i) => (

@@ -74,11 +74,13 @@ export default function Header() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "Tab" && panel.current) {
-        const f = panel.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])");
+        // the cycle is the header's Close button plus everything inside the dialog
+        const f = [toggle.current, ...panel.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")].filter(Boolean) as HTMLElement[];
         if (!f.length) return;
         const firstEl = f[0], lastEl = f[f.length - 1];
-        if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
-        else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+        const active = document.activeElement;
+        if (e.shiftKey && (active === firstEl || !f.includes(active as HTMLElement))) { e.preventDefault(); lastEl.focus(); }
+        else if (!e.shiftKey && (active === lastEl || !f.includes(active as HTMLElement))) { e.preventDefault(); firstEl.focus(); }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -203,7 +205,7 @@ export default function Header() {
         style={{ display: "none", visibility: "hidden", clipPath: "inset(0 0 100% 0)" }}
         data-lenis-prevent
       >
-        <div className="wrap grid min-h-full gap-10 pb-8 pt-24 sm:pb-10 sm:pt-28 lg:grid-cols-[1.5fr_1fr] lg:pt-32">
+        <div className="wrap grid min-h-full gap-10 pb-8 pt-24 sm:pb-10 sm:pt-28 lg:grid-cols-[1.5fr_1fr] lg:pt-32 [@media(max-height:780px)]:pt-20">
           <nav aria-label="Primary" className="self-center">
             <ol className="space-y-0 md:space-y-1">
               {sections.map((s) => (
@@ -238,19 +240,19 @@ export default function Header() {
               <p className="label">Open to opportunities</p>
               <p className="lede max-w-sm !text-bone">{profile.seeking}</p>
             </div>
-            <div data-menu-fade className="grid gap-x-6 gap-y-1 sm:grid-cols-2 sm:gap-y-5 lg:grid-cols-1">
-              <div>
-                <p className="label mb-0.5 sm:mb-1.5">Email</p>
+            <div data-menu-fade className="grid gap-x-6 gap-y-0 sm:grid-cols-2 sm:gap-y-5 lg:grid-cols-1">
+              <div className="flex flex-wrap items-center gap-x-4 sm:block">
+                <p className="label w-16 shrink-0 sm:mb-1.5 sm:w-auto">Email</p>
                 <a href={`mailto:${profile.email}`} className="link inline-flex min-h-11 items-center text-lg sm:min-h-0">{profile.email}</a>
               </div>
-              <div>
-                <p className="label mb-0.5 sm:mb-1.5">LinkedIn</p>
+              <div className="flex flex-wrap items-center gap-x-4 sm:block">
+                <p className="label w-16 shrink-0 sm:mb-1.5 sm:w-auto">LinkedIn</p>
                 <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="link inline-flex min-h-11 items-center text-lg sm:min-h-0">
                   {profile.linkedinHandle} ↗
                 </a>
               </div>
-              <div>
-                <p className="label mb-0.5 sm:mb-1.5">Résumé · {profile.resume.edition}</p>
+              <div className="flex flex-wrap items-center gap-x-4 sm:block">
+                <p className="label w-16 shrink-0 sm:mb-1.5 sm:w-auto">Résumé<span className="hidden sm:inline"> · {profile.resume.edition}</span></p>
                 <a href={profile.resume.href} download={profile.resume.filename} className="link inline-flex min-h-11 items-center text-lg sm:min-h-0">Download PDF ↓</a>
               </div>
             </div>

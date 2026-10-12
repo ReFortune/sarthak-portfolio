@@ -106,7 +106,7 @@ export default function NovaVisual() {
             return (
               <g key={k}>
                 <line x1="18" y1={y} x2="34" y2={y} stroke="rgb(236 231 219)" strokeOpacity="0.5" />
-                <text x="42" y={y + 3.5} className="max-sm:hidden" fill="rgb(236 231 219)" fillOpacity="0.6" fontSize="10" fontFamily="var(--font-mono)" letterSpacing="1">
+                <text x="42" y={y + 3.5} className="max-sm:hidden" fill="rgb(236 231 219)" fillOpacity="0.6" fontSize="12" fontFamily="var(--font-mono)" letterSpacing="0.8">
                   {k} km
                 </text>
               </g>
@@ -186,7 +186,7 @@ function Fig({ src, alt, cap, cover = false }: { src: string; alt: string; cap: 
       <div className="paper-fig relative min-h-0 flex-1">
         <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 22vw, 45vw" className={cover ? "object-cover" : "object-contain p-1.5"} />
       </div>
-      <figcaption className="label mt-1.5 truncate !leading-snug">{cap}</figcaption>
+      <figcaption className="label mt-1.5 !leading-snug sm:truncate">{cap}</figcaption>
     </figure>
   );
 }

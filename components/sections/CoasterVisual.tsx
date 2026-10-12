@@ -166,7 +166,7 @@ export default function CoasterVisual() {
                 <rect x="-10" y="-14" width="6" height="6" fill="rgb(255 91 46)" opacity={on("Shoulder restraints") ? 1 : 0.65} />
                 <rect x="2" y="-14" width="6" height="6" fill="rgb(255 91 46)" opacity={on("Lap bars") ? 1 : 0.65} />
               </g>
-              <text x="34" y="14" fill="rgb(236 231 219)" fontFamily="var(--font-mono)" fontSize="13" letterSpacing="1">
+              <text className="max-sm:hidden" x="34" y="14" fill="rgb(236 231 219)" fontFamily="var(--font-mono)" fontSize="16" letterSpacing="1">
                 {p.name.toUpperCase()}
               </text>
             </g>

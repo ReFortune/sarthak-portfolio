@@ -24,7 +24,7 @@ const ideas = [
 const tryThis = [
   ["Move the pins", "Drag A and B, or focus one and use the arrow keys."],
   ["Fastest or Safest", "Same terrain, two definitions of “best”: watch the route change."],
-  ["Draw a keep-out zone", "Choose Keep-out zone, then click or drag on the map to close ground off. The route goes around it."],
+  ["Draw a keep-out zone", "Choose Keep-out zone, then click, tap or drag on the map to close ground off. The route goes around it."],
   ["Sunlight only", "The rover plans around the light, and waits where it has to."],
   ["Search method", "Under Advanced: A* and Dijkstra return the same route. Turn on Explored to see how much less map A* reads."],
 ];

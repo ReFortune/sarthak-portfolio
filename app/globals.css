@@ -289,7 +289,7 @@ html.lenis body {
 }
 .btn--sm {
   padding: 0.7rem 1.05rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .btn .arrow {
   display: inline-block;
@@ -318,7 +318,7 @@ html.lenis body {
   border-radius: 999px;
   border: 1px solid rgb(var(--bone) / 0.2);
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: rgb(var(--bone-dim));
@@ -409,6 +409,11 @@ input[type="range"].slider::-moz-range-thumb {
   button {
     touch-action: manipulation;
   }
+  /* controls that are small on a mouse layout reach the 44px target on touch */
+  button:not(.absolute):not(.fixed):not(.sticky):not(.btn) {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
 }
 
 /* Fine film grain over everything (static tile, only its offset animates) */
@@ -495,6 +500,26 @@ input[type="range"].slider::-moz-range-thumb {
   }
   .grain {
     animation: none;
+  }
+  /* the ticker becomes a static, wrapping list: nothing is cut off and nothing moves */
+  .marquee {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .marquee-track {
+    animation: none !important;
+    width: 100%;
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.25rem;
+  }
+  .marquee-track[aria-hidden="true"],
+  .ticker-pause {
+    display: none;
+  }
+  .marquee-track > * {
+    padding-inline: 1rem;
   }
 }
 
@@ -674,8 +699,14 @@ html[data-booted="1"] .preloader {
   animation: marquee-x 60s linear infinite;
   will-change: transform;
 }
-.marquee:hover .marquee-track {
+.marquee:hover .marquee-track,
+.ticker-paused .marquee-track {
   animation-play-state: paused;
+}
+
+/* programmatic focus targets (in-page links) get no stray outline */
+[tabindex="-1"]:focus {
+  outline: none;
 }
 
 /* Hero name: per-letter width/weight driven by CSS vars (set by GSAP + the proximity effect) */
@@ -733,7 +764,7 @@ html[data-booted="1"] .preloader {
   color: rgb(var(--laser));
 }
 .lab-label span {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(var(--bone-dim));

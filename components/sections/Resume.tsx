@@ -22,7 +22,7 @@ export default function Resume() {
             <Reveal selector="[data-r]" stagger={0.1}>
               <p data-r className="label mb-5">Edition · {profile.resume.edition} · {profile.resume.pages} pages · PDF</p>
               <p data-r className="lede max-w-xl !text-bone">
-                The whole story in {profile.resume.pages} pages — roles, projects, dates and numbers — in the format recruiters and review boards expect.
+                The short version in {profile.resume.pages} pages — roles, projects, dates and numbers — in the format recruiters and review boards expect.
               </p>
               <div data-r className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
                 <a href={profile.resume.href} download={profile.resume.filename} className="btn btn--solid">

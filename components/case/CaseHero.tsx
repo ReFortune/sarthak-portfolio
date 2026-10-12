@@ -64,7 +64,7 @@ export default function CaseHero({ p }: { p: Project }) {
           </div>
 
           <Reveal className="lg:col-span-7" y={60} delay={0.15}>
-            <div className={`window ticks relative ${p.visual === "planner" ? "h-[min(88svh,54rem)] min-h-[46rem]" : p.visual === "chiron" ? "h-[min(74svh,41rem)] min-h-[46rem] sm:min-h-[34rem]" : p.visual === "oscar" ? "h-[min(74svh,41rem)] min-h-[34rem]" : "h-[min(74svh,41rem)] min-h-[30rem]"}`}>
+            <div className={`window ticks relative ${p.visual === "planner" ? "h-[min(88svh,54rem)] min-h-[46rem]" : p.visual === "chiron" ? "h-[min(74svh,41rem)] min-h-[64rem] sm:min-h-[34rem]" : p.visual === "oscar" ? "h-[min(74svh,41rem)] min-h-[34rem]" : "h-[min(74svh,41rem)] min-h-[30rem]"}`}>
               <div className="absolute inset-0 flex flex-col">
                 <div className="flex items-center justify-between border-b border-bone/10 px-4 py-3 md:px-5">
                   <p className="label label-strong">{p.visual === "planner" ? "Illustrative demo" : "Instrument"} · {p.code}</p>

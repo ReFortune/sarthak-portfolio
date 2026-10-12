@@ -68,7 +68,7 @@ export const projects: Project[] = [
     start: "2026-01",
     end: "2026-04",
     role: "Systems & Payload Lead",
-    team: "ESSE 4361",
+    team: "Course team · ESSE 4361",
     status: "Completed",
     summary:
       "A Mars-orbiting high-definition imaging mission, taken through the NASA project lifecycle to Critical Design Review: a two-satellite stereo constellation mapping the full Martian surface at 1 m or better.",

@@ -12,6 +12,14 @@ export const getLenis = () => (typeof window === "undefined" ? undefined : windo
 
 type Target = string | number | HTMLElement;
 
+/** Move keyboard focus to a scroll target (in-page links should not leave focus behind at the link). Decorative markers hand focus to the next element. */
+export function focusTarget(el: HTMLElement | null) {
+  if (!el) return;
+  const target = el.getAttribute("aria-hidden") === "true" ? ((el.nextElementSibling as HTMLElement | null) ?? el) : el;
+  if (!target.matches("a[href], button, input, select, textarea, [tabindex]")) target.setAttribute("tabindex", "-1");
+  target.focus({ preventScroll: true });
+}
+
 /** Smooth-scroll to an element / selector / y offset (falls back to native when Lenis is off). */
 export function scrollToTarget(target: Target, opts: { offset?: number; duration?: number; immediate?: boolean; force?: boolean } = {}) {
   if (typeof window === "undefined") return;
@@ -24,6 +32,10 @@ export function scrollToTarget(target: Target, opts: { offset?: number; duration
       immediate,
       force,
       easing: (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+      onComplete: () => {
+        const el = typeof target === "string" ? document.querySelector<HTMLElement>(target) : typeof target === "number" ? null : target;
+        focusTarget(el);
+      },
     });
     return;
   }

@@ -83,9 +83,9 @@ export default function ChironVisual() {
   }, []);
 
   return (
-    <div ref={root} className="absolute inset-0 grid grid-cols-1 sm:grid-cols-[1.18fr_1fr]">
+    <div ref={root} className="absolute inset-0 grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] sm:grid-cols-[1.18fr_1fr] sm:grid-rows-1">
       {/* ── the real prototype + budget ── */}
-      <div className="flex min-h-0 flex-col border-b border-bone/10 bg-ink sm:border-b-0 sm:border-r">
+      <div className="flex flex-col border-b border-bone/10 bg-ink sm:min-h-0 sm:border-b-0 sm:border-r">
         <figure className="p-3 md:p-4">
           <div className="paper-fig relative aspect-[1362/1000] w-full">
             <Image
@@ -124,8 +124,8 @@ export default function ChironVisual() {
       </div>
 
       {/* ── navigation logic ── */}
-      <div className="flex min-h-0 flex-col bg-ink">
-        <div className="relative min-h-[17rem] flex-1 p-3 md:p-4" data-cursor="default">
+      <div className="flex flex-col bg-ink sm:min-h-0">
+        <div className="relative min-h-[22.5rem] flex-1 p-3 sm:min-h-[17rem] md:p-4" data-cursor="default">
           <p className="label label-strong">Corridor logic · from the flowchart</p>
           <svg
             viewBox="0 0 330 322"
@@ -136,14 +136,14 @@ export default function ChironVisual() {
           >
             <line x1={MAIN_X} y1={Y_START + 14} x2={MAIN_X} y2={Y_END - 12} stroke="rgb(236 231 219)" strokeOpacity="0.5" strokeWidth="6" strokeLinecap="round" />
             <line x1={MAIN_X} y1={Y_START + 14} x2={MAIN_X} y2={Y_END - 12} stroke="rgb(6 7 11)" strokeWidth="2" strokeDasharray="1 7" strokeLinecap="round" />
-            <text x={MAIN_X - 6} y={Y_START + 34} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">START · PHARMACY</text>
-            <text x={MAIN_X - 6} y={Y_END - 22} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">NURSING STATION</text>
+            <text x={MAIN_X - 6} y={Y_START + 34} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="11.5" letterSpacing="0.5">START · PHARMACY</text>
+            <text x={MAIN_X - 6} y={Y_END - 22} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="11.5" letterSpacing="0.5">NURSING STATION</text>
             {ROOMS.map((r, i) => (
               <g key={r.y}>
                 <line x1={MAIN_X} y1={r.y} x2={BRANCH_X} y2={r.y} stroke="rgb(236 231 219)" strokeOpacity="0.5" strokeWidth="6" />
                 <line x1={MAIN_X} y1={r.y} x2={BRANCH_X} y2={r.y} stroke="rgb(6 7 11)" strokeWidth="2" strokeDasharray="1 7" />
                 <rect ref={(n) => { inds.current[i] = n; }} x={BRANCH_X + 6} y={r.y - 11} width="22" height="22" fill={r.tint} fillOpacity={r.code === "NONE" ? 0.12 : 0.9} stroke={r.tint} strokeWidth="1" />
-                <text x={BRANCH_X + 36} y={r.y + 3} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="0.9">ROOM {i + 1}</text>
+                <text x={BRANCH_X + 36} y={r.y + 3} fill="rgb(163 160 148)" fontFamily="var(--font-mono)" fontSize="11.5" letterSpacing="0.5">ROOM {i + 1}</text>
                 <rect ref={(n) => { pills.current[i] = n; }} x={BRANCH_X - 6} y={r.y - 2} width="9" height="9" fill="rgb(236 231 219)" opacity="0" />
               </g>
             ))}

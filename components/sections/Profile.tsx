@@ -61,7 +61,7 @@ export default function Profile() {
               <span>
                 Fig. 01 — {profile.name} ({profile.pronouns})
               </span>
-              <span className="hidden sm:inline">Hover to scan</span>
+              <span className="hidden sm:inline [@media(pointer:coarse)]:!hidden">Hover to scan</span>
             </figcaption>
           </figure>
         </div>

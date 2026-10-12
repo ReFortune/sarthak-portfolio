@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { focusTarget } from "@/lib/scroll";
 
 /**
  * Lenis smooth scrolling, driven by GSAP's ticker so ScrollTrigger stays perfectly in sync.
@@ -38,7 +39,7 @@ export default function SmoothScroll() {
       const el = document.querySelector<HTMLElement>(hash);
       if (!el) return;
       e.preventDefault();
-      lenis.scrollTo(el, { offset: 0, duration: 1.7, easing: (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)) });
+      lenis.scrollTo(el, { offset: 0, duration: 1.7, easing: (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)), onComplete: () => focusTarget(el) });
       history.replaceState(null, "", hash);
     };
     document.addEventListener("click", onClick);
