@@ -35,6 +35,7 @@ function ProjectBeat({ slot }: { slot: keyof typeof SLOT }) {
   return (
     <Copy
       valign="bottom"
+      panel
       eyebrow={
         <>
           {String(RING.indexOf(slot) + 1).padStart(2, "0")} / {String(RING.length).padStart(2, "0")} <span aria-hidden="true">—</span> {p.kind}
@@ -42,7 +43,7 @@ function ProjectBeat({ slot }: { slot: keyof typeof SLOT }) {
       }
       title={
         <>
-          <span className="block text-[clamp(2.4rem,6.4vw,5.6rem)] leading-[0.92]">{p.code}</span>
+          <span className="block text-[clamp(2.4rem,6.4vw,5.6rem)] leading-[0.92] dock:text-[clamp(2rem,3.4vw,3.2rem)]">{p.code}</span>
           <span className="label mt-3 hidden !normal-case !tracking-[0.03em] !text-bone-dim sm:block">
             {p.role} · {p.team} · {p.period}
           </span>
@@ -96,6 +97,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   survey: (
     <Copy
+      panel
       eyebrow="Canadian Space Agency · LiDAR"
       title={
         <>
@@ -122,6 +124,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   plan: (
     <Copy
+      panel
       eyebrow="Route planning"
       title={
         <>
@@ -153,6 +156,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   crew: (
     <Copy
+      panel
       align="right"
       eyebrow="Leadership"
       title={
@@ -168,6 +172,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   transit: (
     <Copy
+      panel
       align="right"
       eyebrow="Research · HAT-P-18 b"
       title={
@@ -186,6 +191,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   toolkit: (
     <Copy
+      panel
       align="right"
       eyebrow="Skills"
       title={
@@ -200,6 +206,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   path: (
     <Copy
+      panel
       valign="bottom"
       eyebrow="Timeline"
       title={

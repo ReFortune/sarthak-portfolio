@@ -78,7 +78,8 @@ button {
   font: inherit;
   color: inherit;
   background: none;
-  border: 0;
+  /* width only: a button that asks for `border` should draw it (a `border: 0` shorthand also reset the style, so none ever showed) */
+  border-width: 0;
   padding: 0;
   cursor: pointer;
 }
@@ -205,6 +206,19 @@ html.lenis body {
 .rule {
   height: 1px;
   background: rgb(var(--bone) / 0.14);
+}
+
+/* Reachable by keyboard, seen only once it has focus (a "skip to the instrument" button) */
+.until-focus:not(:focus-visible) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0 !important;
 }
 
 /* Instrument corner ticks (8 short lines from one pseudo-element) */

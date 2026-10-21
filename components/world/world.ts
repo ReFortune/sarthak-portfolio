@@ -11,7 +11,7 @@ import { createScan } from "./kit/scan";
 import { createPost } from "./kit/post";
 import { buildLayout, createRouteBuilder, type Layout } from "./layout";
 import { createCamState, createRig, type RigContext } from "./rig";
-import { beatAt, beats, type BeatId } from "./story";
+import { beatAt, beats, roomAt, type BeatId } from "./story";
 import { createActs, type Act, type ActFrame, type Label, type Sortable } from "./acts";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -31,6 +31,22 @@ export type WorldOptions = {
   onReady?: () => void;
 };
 
+/** What the rover knows at this point of the route. */
+export type Telemetry = {
+  /** Metres driven along the route. */
+  distance: number;
+  /** Surface height under the rover (m). */
+  elevation: number;
+  /** The steeper of the slope under the rover and a few metres ahead (degrees). */
+  slope: number;
+  /** Metres to the next gate, or null past the last one on the plain. */
+  nextGate: number | null;
+  /** Simulated returns gathered so far at the given scan rate (Hz) and points per scan. */
+  points(hz: number, perScan: number): number;
+  /** What the planner reported for the route. */
+  plan: { length: number; maxSlope: number; limit: number; ms: number };
+};
+
 export type World = {
   /** Uncover the world (call when the preloader lifts). */
   intro(): void;
@@ -45,6 +61,12 @@ export type World = {
   hovered(): string | null;
   /** What the pointer is ranging on the ground: distance (m) and height (m), or null if nothing is hit. */
   readout(): { range: number; elev: number } | null;
+  /** The wide layout: whether an instrument panel is docked at the right (taking `inset` of the width), so the picture can make room for it. */
+  setDock(on: boolean, inset: number): void;
+  /** What the page is pointing at (a skills group, a timeline row): the world lights it up. */
+  setFocus(key: string | null): void;
+  /** Where the rover is and what its sensor has gathered, for the readouts (null until the world is built). */
+  telemetry(): Telemetry | null;
   dispose(): void;
   /** Dev/testing: jump straight to a scroll position and report where things are. */
   debug: { snap(u: number): void; info(): unknown; stats(): { cpuMs: number; points: number } };
@@ -53,6 +75,10 @@ export type World = {
 const B = Object.fromEntries(beats.map((b) => [b.id, b.index])) as Record<BeatId, number>;
 /** The fastest the rover is driven along the route (m/s): the ground can only be generated so fast. */
 const MAX_SPEED = 110;
+/** Docked, the picture is centred this far across the room the panel leaves (0.5 would be its middle): right of it, so the words sit under its left. */
+const DOCK_BIAS = 0.76;
+/** How fast the rover is imagined to drive (m/s), for counting what its sensor gathers along the way. */
+const ROVER_SPEED = 3.4;
 
 /** Where the route is across the track at world z (it only ever moves forward in z). */
 function routeXAt(route: Layout["route"], z: number) {
@@ -172,11 +198,16 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     boost: 0,
     uPrev: 0,
     introWanted: false,
+    dock: 0,
+    dockOn: false,
+    inset: 0,
+    shift: 0,
+    focus: null as string | null,
   };
   let dprCap = opts.lowPower ? 1.5 : 2;
-  const rigCtx: RigContext = { fovScale: 1, fov: 42, aspect: 1.6 };
+  const rigCtx: RigContext = { fovScale: 1, fov: 42, aspect: 1.6, dock: 0 };
   const frameInfo: ActFrame = {
-    t: 0, dt: 0, u: 0, beat: 0, local: 0, x: 0, cam, camera, pointer: st.pointer, intro: 0,
+    t: 0, dt: 0, u: 0, beat: 0, local: 0, x: 0, cam, camera, pointer: st.pointer, intro: 0, focus: null, dock: 0, inset: 0,
     pulse: (v: number) => { st.pulse = Math.max(st.pulse, v); },
     ping: (x: number, z: number) => terrain.ping(x, z),
   };
@@ -229,6 +260,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     rigCtx.aspect = aspect;
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
+    st.shift = -1; // the view offset is made for a size: apply it again
     starU.uPx.value = dpr * (w < 700 ? 0.9 : 1.15);
     overlay?.setResolution(w, h, dpr);
     st.lastFov = 0; // recompute pxPerUnit next frame
@@ -237,7 +269,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
   /* ── per-frame ─────────────────────────────────────────────────────── */
 
   const tmpV2 = new THREE.Vector3(), headPos = new THREE.Vector3(), mastPos = new THREE.Vector3(), fwd = new THREE.Vector3();
-  const rp = { x: 0, y: 0, z: 0 }, ra = { x: 0, y: 0, z: 0 }, rb = { x: 0, y: 0, z: 0 };
+  const rp = { x: 0, y: 0, z: 0 }, ra = { x: 0, y: 0, z: 0 }, rb = { x: 0, y: 0, z: 0 }, tp = { x: 0, y: 0, z: 0 };
   const qOff = new THREE.Quaternion(), eOff = new THREE.Euler();
   const hit: Hit = { t: 0, x: 0, y: 0, z: 0 };
   const ray = new THREE.Raycaster();
@@ -329,6 +361,10 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     const x = bi + local;
 
     /* camera */
+    // at a stop with an instrument panel docked beside it, the picture makes room (and the words sit low on the left)
+    const dockWant = st.dockOn ? roomAt(x) : 0;
+    st.dock = opts.reduced || st.hard ? dockWant : damp(st.dock, dockWant, 3.2, dt);
+    rigCtx.dock = st.dock;
     rigCtx.fov = camera.fov;
     rigCtx.roverY = opts.getRoverY?.();
     R.sample(st.u, rigCtx, cam);
@@ -344,6 +380,13 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       camera.fov = cam.fov;
       camera.updateProjectionMatrix();
       pxPerUnit.value = (st.height * st.dpr) / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    }
+    // centre the picture in what the panel leaves: the view is a window onto a frame as wide as the screen, slid to the right
+    const shift = st.dock * st.width * Math.max(0, 0.5 - DOCK_BIAS * (1 - st.inset));
+    if (Math.abs(shift - st.shift) > 0.2) {
+      st.shift = shift;
+      if (shift < 0.2) camera.clearViewOffset();
+      else camera.setViewOffset(st.width, st.height, shift, 0, st.width, st.height);
     }
     camera.updateMatrixWorld();
 
@@ -480,7 +523,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     }
 
     /* the set pieces */
-    frameInfo.t = st.t; frameInfo.dt = dt; frameInfo.u = st.u; frameInfo.beat = bi; frameInfo.local = local; frameInfo.x = x; frameInfo.intro = st.intro;
+    frameInfo.focus = st.focus; frameInfo.dock = st.dock; frameInfo.inset = st.inset; frameInfo.t = st.t; frameInfo.dt = dt; frameInfo.u = st.u; frameInfo.beat = bi; frameInfo.local = local; frameInfo.x = x; frameInfo.intro = st.intro;
     for (const a of acts) a.update(frameInfo);
     // solid things hide what is behind them: draw the far ones first
     for (const s of sortables) sortDist.set(s, camera.position.distanceToSquared(s.pos));
@@ -590,6 +633,34 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     readout() {
       return st.readout;
     },
+    setDock(on, inset) {
+      st.dockOn = on;
+      st.inset = clamp(inset, 0, 0.75);
+    },
+    setFocus(key) {
+      st.focus = key;
+    },
+    telemetry() {
+      if (!layout) return null;
+      const s = cam.roverS;
+      routeAt(layout.route, s, tp);
+      const slopeAt = (x: number, z: number) => {
+        const e = 0.7;
+        const gx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), gz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
+        return (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI;
+      };
+      const slope = Math.max(slopeAt(tp.x, tp.z), slopeAt(tp.x + Math.sin(st.heading) * 4, tp.z + Math.cos(st.heading) * 4));
+      let next: number | null = null;
+      for (const g of layout.gates) if (g.s > s + 2 && (next === null || g.s < next)) next = g.s;
+      return {
+        distance: s,
+        elevation: heightAt(tp.x, tp.z),
+        slope,
+        nextGate: next === null ? null : next - s,
+        points: (hz, perScan) => s * (hz * perScan) / ROVER_SPEED,
+        plan: layout.route.readout,
+      };
+    },
     hovered() {
       if (!st.pointer.active) return null;
       for (const a of acts) {
@@ -630,6 +701,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       info() {
         if (!layout) return { ready: false };
         return {
+          beats: beats.map((b) => [b.id, b.u0, b.u1]),
           ready: st.ready, u: st.u, beat: cam.beat, local: cam.local, roverS: cam.roverS, sRef: cam.sRef, intro: st.intro,
           cam: camera.position.toArray(), fov: camera.fov, ring: layout.ring.center.toArray(), routeLength: layout.length, sRing: layout.sRing,
           gates: layout.gates.map((g) => ({ id: g.id, s: Math.round(g.s), pos: g.pos.toArray().map((v) => Math.round(v)) })),

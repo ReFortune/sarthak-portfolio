@@ -29,7 +29,8 @@ function analytic(p: LabParams) {
 const chip = (n: number) =>
   n >= 15 ? { t: "Resolved", c: "border-ice/60 text-ice" } : n >= 6 ? { t: "Marginal", c: "border-bone/50 text-bone" } : { t: "Missed", c: "border-laser/70 text-laser" };
 
-export default function PushbroomLab() {
+export default function PushbroomLab({ variant = "page" }: { variant?: "page" | "panel" }) {
+  const panel = variant === "panel";
   const wrap = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
   const labelHost = useRef<HTMLDivElement>(null);
@@ -112,27 +113,34 @@ export default function PushbroomLab() {
   const pps = stats ? params.rate * stats.raysPerScan : 0;
 
   return (
-    <div ref={wrap} className="window ticks" id="pushbroom-lab">
+    <div ref={wrap} className={panel ? "bg-ink-2" : "window ticks"} id={panel ? undefined : "pushbroom-lab"}>
       {/* header strip */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-bone/10 px-4 py-3 md:px-5">
-        <p className="label label-strong flex items-center gap-2.5">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-laser [animation:blink_1.2s_infinite]" />
-          Pushbroom lab
-        </p>
-        <p className="label hidden sm:block">Interactive · illustrative model, not flight data</p>
-        <p className="label tnum">
-          {stats ? (stats.done ? "Scan complete" : `Scanning ${String(Math.round(stats.progress * 100)).padStart(2, "0")}%`) : "Initialising"}
-        </p>
-      </div>
+      {!panel && (
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-bone/10 px-4 py-3 md:px-5">
+          <p className="label label-strong flex items-center gap-2.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-laser [animation:blink_1.2s_infinite]" />
+            Pushbroom lab
+          </p>
+          <p className="label hidden sm:block">Interactive · illustrative model, not flight data</p>
+          <p className="label tnum">
+            {stats ? (stats.done ? "Scan complete" : `Scanning ${String(Math.round(stats.progress * 100)).padStart(2, "0")}%`) : "Initialising"}
+          </p>
+        </div>
+      )}
 
-      <div className="grid lg:grid-cols-[1.55fr_1fr]">
+      <div className={panel ? "grid" : "grid lg:grid-cols-[1.55fr_1fr]"}>
         {/* ── viewport ─────────────────────────────────────────── */}
-        <div className="relative min-h-[26rem] border-b border-bone/10 lg:min-h-[36rem] lg:border-b-0 lg:border-r">
+        <div className={`relative border-b border-bone/10 ${panel ? "h-[clamp(11rem,26svh,17rem)]" : "min-h-[26rem] lg:min-h-[36rem] lg:border-b-0 lg:border-r"}`}>
           <div ref={canvasHost} className="absolute inset-0 bg-ink-2" />
           <div ref={labelHost} className="pointer-events-none absolute inset-0 overflow-hidden" />
           {!supported && (
             <p className="label absolute inset-0 grid place-items-center px-8 text-center">
               WebGL is unavailable in this browser. The readouts on the right still update.
+            </p>
+          )}
+          {panel && (
+            <p className="label tnum pointer-events-none absolute left-3 top-3 !text-bone">
+              {stats ? (stats.done ? "Scan complete" : `Scanning ${String(Math.round(stats.progress * 100)).padStart(2, "0")}%`) : "Initialising"} <span className="text-bone-mute">· illustrative model</span>
             </p>
           )}
           <p className="label pointer-events-none absolute bottom-3 left-4 hidden !text-bone/60 sm:block">Drag to orbit</p>
@@ -158,28 +166,28 @@ export default function PushbroomLab() {
         </div>
 
         {/* ── controls ─────────────────────────────────────────── */}
-        <div className="space-y-6 p-4 md:p-6">
+        <div className={panel ? "space-y-4 p-4" : "space-y-6 p-4 md:p-6"}>
           <fieldset>
-            <legend className="label mb-3">Trade space · scan rate × angular increment</legend>
-            <div className="grid grid-cols-2 gap-2">
+            <legend className="label mb-2.5">Trade space · scan rate × angular increment</legend>
+            <div className={`grid gap-2 ${panel ? "grid-cols-4" : "grid-cols-2"}`}>
               {PRESETS.map((p, i) => (
                 <button
                   key={i}
                   type="button"
                   aria-pressed={activePreset === i}
                   onClick={() => update({ rate: p.rate, inc: p.inc })}
-                  className={`border px-3 py-2.5 text-left transition-colors ${
+                  className={`border text-left transition-colors ${panel ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     activePreset === i ? "border-laser bg-laser/10" : "border-bone/15 hover:border-bone/50"
                   }`}
                 >
-                  <span className="h-display block text-[1.35rem] leading-none">{p.rate} Hz</span>
-                  <span className="label mt-1 block">{p.inc.toFixed(2)}° increment</span>
+                  <span className={`h-display block leading-none ${panel ? "text-[1.05rem]" : "text-[1.35rem]"}`}>{p.rate} Hz</span>
+                  <span className="label mt-1 block !text-[0.68rem]">{p.inc.toFixed(2)}°{panel ? "" : " increment"}</span>
                 </button>
               ))}
             </div>
           </fieldset>
 
-          <div className="space-y-3.5">
+          <div className={panel ? "space-y-2" : "space-y-3.5"}>
             <Slider label="Traverse speed" unit="m/s" min={0.3} max={2} step={0.05} value={params.speed} digits={2} onChange={(v) => update({ speed: v })} />
             <Slider label="Sensor pitch" unit="° below horizontal" min={20} max={75} step={1} value={params.pitch} digits={0} onChange={(v) => update({ pitch: v })} />
             <Slider label="Mast height" unit="m" min={0.4} max={1.4} step={0.05} value={params.height} digits={2} onChange={(v) => update({ height: v })} />

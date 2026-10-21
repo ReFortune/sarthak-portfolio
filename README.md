@@ -82,7 +82,7 @@ Prose counts ("Six projects…") and the case-study header ("Case study 05 / 06"
 
 ## The home page, briefly
 
-**One canvas, one scroll.** `components/experience/Experience.tsx` lays a tall track (`TOTAL_SVH`, about 24 screens) with a sticky stage in it. The stage holds a
+**One canvas, one scroll.** `components/experience/Experience.tsx` lays a tall track (`TOTAL_SVH`, about 27 screens) with a sticky stage in it. The stage holds a
 single WebGL canvas and, over it, the words of whichever beat the story is in. Scroll position is the only input: it becomes a progress `u` (0–1), and
 `world.ts` draws the frame for `u`. The menu's ten sections are anchors laid along the track, so the header, the HUD and every `/#projects`-style link still work.
 
@@ -101,6 +101,15 @@ terrain clearance, off-centre framing so the subject sits clear of the words).
 - *The sky* (`acts/sky/`): rings the camera climbs through, the planet's limb appearing as the ground falls away, then a steel bridge growing member by member while a crew of nodes grows from six to twenty, HAT-P-18 b
   crossing its star with the light curve drawn from the real 706 frames below it, and the skills as a star chart.
 - *The path* (`acts/finale.ts`): a corridor of year gates with the timeline laid beside it (each study, job and project is a line from the day it began to the day it ended), then a dawn.
+
+**The instruments.** The scroll is the picture; the *instruments* are how you take it apart. At every stop that has one, a panel (`experience/Panel.tsx`, the table in `experience/instruments.tsx`) comes on beside the world
+with the live thing from the long-form site: the pushbroom trade study's sliders, the route planner, Sparrow's sensor switch, Route-M's globe, the ocean-colour spectrum, NOVA's ascent, CHIRON's corridor logic, the bridge and
+team growth, the transit scrubber, the skills, the timeline. They are the archive's own components (a few take a `stacked`, `compact` or `narrow` prop to fit a narrower box), fetched when the story gets near their stop and
+dropped when it moves on. `PANEL_DEFS` in `story.ts` says over which stretch each is on show. Three things tie them to the world: on a wide screen the picture *makes room* (`world.setDock`: a wider view, aimed high, shifted
+so it is centred in what the panel leaves, with the words low on the left); pointing at something in the panel lights it up in the world (`world.setFocus`: a skills group's stars, a timeline row's line along the route); and the first
+three stops show the rover's own readouts (`world.telemetry()`: distance, elevation, slope, the next gate, the points gathered, what the planner said). A panel can be folded away or opened large. On a screen too narrow to dock it
+(the `dock:` screen in `tailwind.config.ts` and `DOCK_QUERY` are the same query), a bar at the foot opens it as a sheet over the world, which pauses while it is open. Each stop's words carry a keyboard-only "Use the
+instrument" button, since the panel sits apart from them in the page.
 
 **Drawing.** Everything is additive point sprites (`kit/sculpt.ts` samples points over surfaces and shares one shader with the rover and the gates, whose "laser line builds it" effect is that shader's `uBuilt`). Solid things carry a dark
 body so they hide what is behind them; the world sorts them far to near each frame. `kit/post.ts` composites the scene with a small bloom, chromatic aberration that grows with speed, a "tech displacement" that tears the image when you pass a gate,

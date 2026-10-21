@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { bootStore, cursorReadout, markBoot } from "@/lib/store";
-import { beatStore, dossierStore, hoverStore } from "@/lib/world-store";
+import { beatStore, dockStore, dossierStore, focusStore, foldStore, hoverStore, panelEnv, panelStore, sheetStore, worldApi } from "@/lib/world-store";
 import { clamp, smoothstep } from "@/lib/math";
 import { scrollToTarget } from "@/lib/scroll";
-import { beatAt, beats, EXHIBIT_PROJECT, sectionRanges, TOTAL_SVH } from "@/components/world/story";
+import { beatAt, beats, DOCK_QUERY, EXHIBIT_PROJECT, panelAt, sectionRanges, TOTAL_SVH } from "@/components/world/story";
 import type { World } from "@/components/world/world";
 import { contents } from "./content";
 import Labels from "./Labels";
 import Rail from "./Rail";
 import Dossier from "./Dossier";
+import Panel from "./Panel";
+import { preload } from "./instruments";
 
 declare global {
   interface Window {
@@ -31,6 +33,7 @@ export default function Experience() {
   const worldRef = useRef<World | null>(null);
   const progress = useRef(0);
   const roverY = useRef<number | undefined>(undefined);
+  const dockSync = useRef<() => void>(() => {});
 
   /* the words fade in and out with the story; one beat at a time */
   const applyBeats = (u: number) => {
@@ -51,6 +54,15 @@ export default function Experience() {
       el.style.setProperty("--pe", o > 0.5 ? "auto" : "none");
     });
     if (beatStore.get() !== index) beatStore.set(index);
+
+    /* the instrument that belongs to this stretch of the story, and how fully it is on show */
+    const x = index + (u - beats[index].u0) / (beats[index].u1 - beats[index].u0);
+    const { id, env } = panelAt(x);
+    panelStore.set(id);
+    panelEnv.set(env);
+    // fetch the next one's code before it is wanted
+    const ahead = panelAt(x + 0.9).id;
+    if (ahead && ahead !== id) preload(ahead);
   };
 
   /* Tab into a beat that is not on screen: take the story to it, so what has focus is always visible */
@@ -91,6 +103,34 @@ export default function Experience() {
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* the wide layout: the instrument panel docks at the right of the world, and the world makes room for it */
+  useEffect(() => {
+    const mq = window.matchMedia(DOCK_QUERY);
+    const apply = () => dockStore.set(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  useEffect(() => {
+    const s = stage.current;
+    if (!s) return;
+    const push = () => {
+      const w = s.clientWidth || 1;
+      const panelW = Math.min(672, Math.max(416, 0.38 * w)); // clamp(26rem, 38vw, 42rem)
+      // the panel, its margin at the right and a gap before it
+      worldRef.current?.setDock(dockStore.get() && !foldStore.get(), (56 + panelW + 24) / w);
+    };
+    dockSync.current = push;
+    push();
+    const off = [dockStore.subscribe(push), foldStore.subscribe(push)];
+    const ro = new ResizeObserver(push);
+    ro.observe(s);
+    return () => {
+      off.forEach((f) => f());
+      ro.disconnect();
+    };
   }, []);
 
   /* the world */
@@ -154,9 +194,22 @@ export default function Experience() {
       worldRef.current = world;
       if (process.env.NODE_ENV !== "production") window.__world = world;
       world.setProgress(progress.current);
+      dockSync.current();
+      worldApi.telemetry = () => world?.telemetry() ?? null;
+      cleanups.push(() => {
+        worldApi.telemetry = () => null;
+      });
+      cleanups.push(focusStore.subscribe(() => world?.setFocus(focusStore.get())));
 
-      const io = new IntersectionObserver((entries) => world?.setVisible(entries[entries.length - 1].isIntersecting), { rootMargin: "80px" });
+      // drawing stops while the page is off-screen, and while a sheet is open over it
+      let onScreen = true;
+      const run = () => world?.setVisible(onScreen && !sheetStore.get());
+      const io = new IntersectionObserver((entries) => {
+        onScreen = entries[entries.length - 1].isIntersecting;
+        run();
+      }, { rootMargin: "80px" });
       io.observe(el);
+      cleanups.push(sheetStore.subscribe(run));
       const ro = new ResizeObserver(() => {
         measure();
         world?.resize();
@@ -289,6 +342,8 @@ export default function Experience() {
               </div>
             );
           })}
+
+          <Panel />
         </div>
       </div>
       <Rail />

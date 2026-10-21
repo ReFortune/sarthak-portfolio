@@ -129,7 +129,7 @@ export default function Threshold() {
         </h1>
       </div>
 
-      <div className="max-w-[50rem]">
+      <div className="max-w-[50rem] dock:max-w-[min(50rem,calc(100%-27rem))]">
         <div className="hero-fade mb-6 space-y-2 sm:mb-8">
           <p className="label label-strong text-balance !text-[0.8rem] !leading-relaxed !text-bone sm:!text-[0.85rem]">
             <span className="mr-3 inline-block h-1.5 w-1.5 shrink-0 -translate-y-px rounded-full bg-laser [animation:blink_1.4s_infinite]" />

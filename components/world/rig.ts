@@ -42,7 +42,15 @@ export type RigContext = {
   aspect: number;
   /** Portrait screens: where the rover should sit (fraction of the height), clear of the copy. Undefined elsewhere. */
   roverY?: number;
+  /** 0–1: how far the picture has made room for the docked instrument panel (the words then sit low on the left). */
+  dock: number;
 };
+
+/** With the panel docked, where the rover sits on screen (fraction of the height from the top): high, above the words. */
+const DOCK_ROVER_Y = 0.4;
+/** ...how much wider the view is (so the picture is smaller and clear of the words below it), and how high a fixed pose is aimed. */
+const DOCK_FOV = 0.2;
+const DOCK_LIFT = 0.3;
 
 export function createRig(layout: Layout) {
   const keys: Key[] = beats.map((b) => layout.keys[b.id]);
@@ -58,7 +66,7 @@ export function createRig(layout: Layout) {
     if (p.type === "world") {
       out.pos.copy(p.pos);
       out.look.copy(p.look);
-      out.fov = (p.fov ?? 42) * ctx.fovScale;
+      out.fov = (p.fov ?? 42) * ctx.fovScale * (1 + DOCK_FOV * ctx.dock);
       out.orbit = p.orbit ?? null;
       if (p.room) room(out, p.room, ctx);
       return;
@@ -68,13 +76,13 @@ export function createRig(layout: Layout) {
     const side = p.side ?? 0;
     // `across` is the viewer's left when travelling along `d`; a positive `side` puts the camera on the right
     out.pos.set(r.x - d.x * p.back - d.z * side, r.y + p.up, r.z - d.z * p.back + d.x * side);
-    out.fov = (p.fov ?? 42) * ctx.fovScale;
+    out.fov = (p.fov ?? 42) * ctx.fovScale * (1 + DOCK_FOV * ctx.dock);
     out.orbit = null;
     if (p.ry !== undefined) {
       // aim so the rover (a metre above its wheels) lands `ry` of the way down the screen, centred across
       const dist = Math.hypot(p.back, side) || 1;
       const down = Math.atan2(out.pos.y - (r.y + 1), dist);
-      const want = ctx.roverY ?? p.ry;
+      const want = lerp(ctx.roverY ?? p.ry, DOCK_ROVER_Y, ctx.dock);
       const off = Math.atan((want - 0.5) * 2 * Math.tan((ctx.fov * Math.PI) / 360));
       const pitch = down - off;
       const hx = r.x - out.pos.x, hz = r.z - out.pos.z;
@@ -91,8 +99,9 @@ export function createRig(layout: Layout) {
   function room(out: Eval, side: "left" | "right", ctx: RigContext) {
     const tv = Math.tan((out.fov * Math.PI) / 360);
     const portrait = ctx.aspect < 0.85;
-    const fx = portrait ? 0 : side === "left" ? 0.38 : -0.38;
-    const fy = portrait ? 0.4 : 0.04;
+    // docked: the picture is centred in what the panel leaves, with the words below it, so there is no sideways room to make
+    const fx = portrait ? 0 : (side === "left" ? 0.38 : -0.38) * (1 - ctx.dock);
+    const fy = portrait ? 0.4 : lerp(0.04, DOCK_LIFT, ctx.dock);
     dirv.subVectors(out.look, out.pos);
     const len = dirv.length();
     dirv.normalize();

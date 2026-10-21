@@ -1,23 +1,13 @@
 "use client";
 
-import { scrollToTarget } from "@/lib/scroll";
 import { useStore } from "@/lib/store";
 import { beatStore } from "@/lib/world-store";
-import { beatIndex, beats, RAIL } from "@/components/world/story";
+import { beatIndex, RAIL } from "@/components/world/story";
+import { jumpToBeat } from "./jump";
 
 /** A thin rail down the right edge: one tick for each stop of the story. The current one reaches out; the rest wait. */
 export default function Rail() {
   const active = useStore(beatStore);
-
-  const go = (i: number) => {
-    const track = document.querySelector<HTMLElement>("[data-track]");
-    const stage = document.querySelector<HTMLElement>("[data-stage]");
-    if (!track || !stage) return;
-    const b = beats[i];
-    // a little way into the beat, where the pose is held and the words are up
-    const u = b.u0 + (b.u1 - b.u0) * (b.hold > 0 ? 0.16 : 0.05);
-    scrollToTarget(track.getBoundingClientRect().top + window.scrollY + u * (track.offsetHeight - stage.offsetHeight), { duration: 2 });
-  };
 
   return (
     <nav aria-hidden="true" className="pointer-events-none fixed right-3 top-1/2 z-[56] hidden -translate-y-1/2 md:block lg:right-4">
@@ -34,7 +24,7 @@ export default function Rail() {
               <button
                 type="button"
                 tabIndex={-1}
-                onClick={() => go(i)}
+                onClick={() => jumpToBeat(r.id)}
                 className="flex h-5 w-8 items-center justify-end"
                 data-cursor="link"
               >

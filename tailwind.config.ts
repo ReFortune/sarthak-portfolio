@@ -34,7 +34,8 @@ const config: Config = {
         out: "cubic-bezier(.16,1,.3,1)",
         io: "cubic-bezier(.76,0,.24,1)",
       },
-      screens: { xs: "480px" },
+      // `dock:` is the wide layout, where an instrument panel sits beside the world (the same query as `DOCK_QUERY` in the story table)
+      screens: { xs: "480px", dock: { raw: "(min-width: 1000px) and (min-aspect-ratio: 6/5) and (min-height: 500px)" } },
     },
   },
   plugins: [],

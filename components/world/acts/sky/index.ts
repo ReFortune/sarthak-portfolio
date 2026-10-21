@@ -42,7 +42,9 @@ export function createSky(ctx: ActContext): Act {
     update(f: ActFrame) {
       const x = f.x;
       const aspect = f.camera.aspect;
-      const fit = aspect < 0.85 ? 0.8 : 1;
+      // a docked panel leaves part of the screen: the clusters are drawn to fit what is left
+      const room = Math.min(1, Math.max(0.7, (1 - f.inset) / 0.6)) * 0.9;
+      const fit = (aspect < 0.85 ? 0.8 : 1) * (1 + (room - 1) * f.dock);
       const high = smoothstep(B.nova + 0.45, B.ascent + 0.45, x) * (1 - smoothstep(B.toolkit + 0.75, B.descent + 0.6, x));
       limb.setGain(high);
       if (high > 0.003) limb.update(f.camera.position, f.t);

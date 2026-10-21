@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { hash2 } from "@/lib/terrain";
-import { clamp, smoothstep } from "@/lib/math";
+import { clamp, damp, smoothstep } from "@/lib/math";
 import { EDGES, STARS, type Star } from "@/data/constellation";
 import { skillClusters } from "@/data/skills";
 import { createSculpture, TONE, type RGB, type V3 } from "../../kit/sculpt";
@@ -32,20 +32,24 @@ export function createConstellation(ctx: ClusterContext): Cluster {
   STARS.forEach((s, i) => pos.set(s.id, place(s, (hash2(i, 1, 913) - 0.5) * 14)));
   const primary = (s: Star): RGB => (s.clusters.length > 1 ? TONE.bone : COLOUR[s.clusters[0]]);
 
-  /* the stars: a hot core, a halo and a small cross */
-  S.part(1, (b) => {
-    STARS.forEach((s, i) => {
-      const [x, y, z] = pos.get(s.id)!;
-      const c = primary(s);
-      const p = s.x / 1000;
-      b.point(x, y, z, c, { tone: 3, hot: 0.35, param: p });
-      for (let k = 0; k < 7; k++) {
-        const a = (k / 7) * Math.PI * 2 + i, r = 0.7 + 0.4 * hash2(i, k, 914);
-        b.point(x + Math.cos(a) * r, y + Math.sin(a) * r, z, c, { tone: 0.9, param: p });
-      }
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let k = 1; k <= 3; k++) b.point(x + dx * k * 0.7, y + dy * k * 0.7, z, c, { tone: 1.3 - k * 0.3, param: p });
-    });
-  }, { size: 0.55 });
+  /* the stars: a hot core, a halo and a small cross; one part for each group, so a group can be lit on its own */
+  const groups = skillClusters.map((c) => c.id);
+  const starParts = groups.map((cid, g) =>
+    S.part(11 + g, (b) => {
+      STARS.forEach((s, i) => {
+        if (s.clusters[0] !== cid) return;
+        const [x, y, z] = pos.get(s.id)!;
+        const c = primary(s);
+        const p = s.x / 1000;
+        b.point(x, y, z, c, { tone: 3, hot: 0.35, param: p });
+        for (let k = 0; k < 7; k++) {
+          const a = (k / 7) * Math.PI * 2 + i, r = 0.7 + 0.4 * hash2(i, k, 914);
+          b.point(x + Math.cos(a) * r, y + Math.sin(a) * r, z, c, { tone: 0.9, param: p });
+        }
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let k = 1; k <= 3; k++) b.point(x + dx * k * 0.7, y + dy * k * 0.7, z, c, { tone: 1.3 - k * 0.3, param: p });
+      });
+    }, { size: 0.55 })
+  );
 
   /* the dust of the field */
   S.part(2, (b) => {
@@ -67,7 +71,7 @@ export function createConstellation(ctx: ClusterContext): Cluster {
     list.forEach((e, i) => arr.set([...e.a, ...e.b], i * 6));
     const l = S.lines(arr, COLOUR[id], 0.7);
     l.geo.setDrawRange(0, 0);
-    return { l, n: list.length };
+    return { id, l, n: list.length };
   });
 
   const centroid = (cid: string): V3 => {
@@ -75,19 +79,48 @@ export function createConstellation(ctx: ClusterContext): Cluster {
     return [m.reduce((n, s) => n + pos.get(s.id)![0], 0) / m.length, m.reduce((n, s) => n + pos.get(s.id)![1], 0) / m.length, 0];
   };
 
+  /* what the page is pointing at: a group of skills, or one skill (which lights the groups it belongs to) */
+  const lit = (focus: string | null, cid: string) => {
+    if (!focus) return true;
+    if (focus.startsWith("cluster:")) return focus.slice(8) === cid;
+    const star = STARS.find((s) => `skill:${s.id}` === focus);
+    return star ? star.clusters.includes(cid) : true;
+  };
+  const strong = (focus: string | null, s: Star) => (focus === null ? false : focus.startsWith("cluster:") ? s.clusters.includes(focus.slice(8)) : focus === `skill:${s.id}`);
+  const mult = new Map<string, number>(groups.map((g) => [g, 1]));
+  const named = new Map<string, number>(STARS.map((s) => [s.id, 0]));
+  let docked = 0;
+  let focus: string | null = null;
+
   const v = new THREE.Vector3();
-  const part = S.parts[0];
+  const dust = S.parts[groups.length];
   return {
     group,
     update(f, _a, gain) {
       const local = f.x - BEAT;
       const p = smoothstep(-0.25, 0.55, local);
       const e = smoothstep(0.15, 0.85, local);
+      focus = f.focus && (f.focus.startsWith("cluster:") || f.focus.startsWith("skill:")) ? f.focus : null;
+      docked = f.dock;
       S.setGain(gain);
       S.uniforms.uTime.value = f.t;
-      part.built.value = (p + 0.16) / 1.3 + 0.002;
-      S.parts[1].built.value = 1;
-      for (const s of lineSets) s.l.geo.setDrawRange(0, Math.floor(s.n * clamp(e * 1.05)) * 2);
+      dust.built.value = 1;
+      groups.forEach((cid, g) => {
+        // a group that is pointed at glows; the rest sit back
+        const m = damp(mult.get(cid)!, focus === null ? 1 : lit(focus, cid) ? 1.7 : 0.3, 8, f.dt);
+        mult.set(cid, m);
+        starParts[g].built.value = (p + 0.16) / 1.3 + 0.002;
+        starParts[g].mul = m;
+      });
+      for (const s of lineSets) {
+        s.l.geo.setDrawRange(0, Math.floor(s.n * clamp(e * 1.05)) * 2);
+        s.l.mat.opacity = 0.7 * gain * clamp(mult.get(s.id) ?? 1, 0, 1.5);
+      }
+      for (const s of STARS) {
+        // with the skills listed beside it, a star carries its name only while it is pointed at
+        const want = docked > 0.5 ? (strong(focus, s) ? 1 : 0) : 1;
+        named.set(s.id, damp(named.get(s.id)!, want, 9, f.dt));
+      }
       S.apply();
     },
     labels(project, a) {
@@ -99,14 +132,26 @@ export function createConstellation(ctx: ClusterContext): Cluster {
         const s = project(v);
         out.push({ id, text, short, x: s.x, y: s.y, visible: s.visible, side, alpha, kind, minor });
       };
-      for (const c of skillClusters) {
-        const [cx, cy] = centroid(c.id);
+      // the group names are set in full unless the chart has been drawn small enough that neighbours would run together
+      const heads = skillClusters.map((c) => {
+        const [cx] = centroid(c.id);
         const off = c.id === "sim" || c.id === "sw" ? H * 0.5 + 1 : -H * 0.5 - 4;
-        push(`cl-${c.id}`, c.name.toUpperCase(), [cx, off, 0], "top", "cluster", false, SHORT[c.id]);
-      }
+        v.set(cx, off, 0);
+        group.localToWorld(v);
+        return { c, off, cx, sx: project(v).x };
+      });
+      const gapOf = (a: string, b: string) => Math.abs(heads.find((h) => h.c.id === a)!.sx - heads.find((h) => h.c.id === b)!.sx);
+      const tight = Math.min(gapOf("sim", "sw"), gapOf("hw", "sys")) < 250;
+      for (const h of heads) push(`cl-${h.c.id}`, tight ? SHORT[h.c.id] : h.c.name.toUpperCase(), [h.cx, h.off, 0], "top", "cluster", false, SHORT[h.c.id]);
       for (const s of STARS) {
         const side = s.a === "r" ? "right" : s.a === "l" ? "left" : s.a === "t" ? "top" : "bottom";
-        push(`st-${s.id}`, s.label, pos.get(s.id)!, side, "tag", true);
+        const k = named.get(s.id) ?? 1;
+        if (k < 0.03) continue;
+        const [x, y, z] = pos.get(s.id)!;
+        v.set(x, y, z);
+        group.localToWorld(v);
+        const sp = project(v);
+        out.push({ id: `st-${s.id}`, text: s.label, x: sp.x, y: sp.y, visible: sp.visible, side, alpha: alpha * k, kind: "tag", minor: true });
       }
       return out;
     },

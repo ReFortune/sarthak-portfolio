@@ -17,6 +17,12 @@ export type ActFrame = {
   pointer: { x: number; y: number; active: boolean };
   /** 0 → 1 as the world is first uncovered. */
   intro: number;
+  /** What the page is pointing at (a skills group, a timeline row), for the world to light up. Null when nothing is. */
+  focus: string | null;
+  /** 0–1: how far the picture has made room for a docked instrument panel (things are drawn a little smaller, and the words that the panel already says can go). */
+  dock: number;
+  /** The share of the screen's width that a docked panel (and its margin) takes, when there is one. */
+  inset: number;
   /** Kick the screen transition (a gate pulse), 0–1. */
   pulse(strength: number): void;
   /** A ranging ripple spreading out over the ground from a point. */

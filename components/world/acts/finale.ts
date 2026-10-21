@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { heightAt } from "@/lib/terrain";
-import { clamp, smoothstep, ymToYear } from "@/lib/math";
+import { clamp, damp, smoothstep, ymToYear } from "@/lib/math";
 import { timeline, type TimelineKind } from "@/data/timeline";
 import { createSculpture, TONE, type RGB } from "../kit/sculpt";
 import { createDawn } from "../kit/dawn";
@@ -70,8 +70,9 @@ export function createFinale(ctx: ActContext): Act {
       l[k] = row.s1;
       return { ...row, lane: k };
     });
-  const rails = S.part(2, (b) => {
-    for (const row of placed) {
+  // one part for each line, so a row the page points at can be lit on its own
+  const railParts = placed.map((row, i) =>
+    S.part(20 + i, (b) => {
       const off = row.side * (5.0 + row.lane * 0.75);
       for (let s = row.s0; s <= row.s1; s += 0.5) {
         const [x, y, z] = ground(s, off, 0.14);
@@ -81,8 +82,10 @@ export function createFinale(ctx: ActContext): Act {
       const [hx, hy, hz] = ground(row.s0, off, 0.3);
       b.point(hx, hy, hz, row.colour, { tone: 2.6, hot: 0.5, param: prm(row.s0) });
       b.point(hx, hy + 0.35, hz, row.colour, { tone: 1.8, param: prm(row.s0) });
-    }
-  }, { size: 0.085 });
+    }, { size: 0.085 })
+  );
+  const railMul = placed.map(() => 1);
+  let focusRow: string | null = null;
 
   /* the sun behind the last gate */
   const fg = layout.finale.finalGate;
@@ -121,6 +124,12 @@ export function createFinale(ctx: ActContext): Act {
       const reach = f.cam.sRef !== null ? f.cam.sRef + 46 : sA - 30 + span * smoothstep(B.descent, B.path, x);
       const p = prm(Math.max(reach, sA - 30 + span * smoothstep(B.descent + 0.2, B.path + 0.2, x)));
       for (const part of S.parts) part.built.value = (p + 0.16) / 1.3 + 0.002;
+      // a row the page points at glows; the rest sit back
+      focusRow = f.focus && f.focus.startsWith("row:") ? f.focus.slice(4) : null;
+      placed.forEach((row, i) => {
+        railMul[i] = damp(railMul[i], focusRow === null ? 1 : row.r.id === focusRow ? 2.4 : 0.3, 8, f.dt);
+        railParts[i].mul = railMul[i];
+      });
       S.apply();
     },
     labels(project: Project) {
@@ -145,7 +154,19 @@ export function createFinale(ctx: ActContext): Act {
           alpha: smoothstep(62, 30, d) * smoothstep(-4, 4, d),
         });
       }
+      if (focusRow) {
+        // the row the page points at is named wherever it is in view
+        const row = placed.find((p) => p.r.id === focusRow);
+        if (row) {
+          const d = row.s0 - cs;
+          const [x, y, z] = ground(row.s0, row.side * (5.0 + row.lane * 0.75), 0.9);
+          v.set(x, y, z);
+          const s = project(v);
+          if (d > -8 && d < 120) out.push({ id: `tl-${row.r.id}`, text: row.r.label, x: s.x, y: s.y, visible: s.visible, side: row.side < 0 ? "left" : "right", alpha: smoothstep(120, 80, d) * smoothstep(-8, 0, d) });
+        }
+      }
       for (const row of labelRows) {
+        if (row.r.id === focusRow) continue;
         const d = row.s0 - cs;
         if (d < 2 || d > 34) continue;
         const [x, y, z] = ground(row.s0, row.side * (5.0 + row.lane * 0.75), 0.9);
