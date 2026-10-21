@@ -44,6 +44,7 @@ components/
   hero/                   Hero, TerrainCanvas (React shell), terrainScene.ts (three.js), routePlanner.ts (the planner behind the route)
   sections/               one file per home-page section
     lab/                  pushbroom-LiDAR simulator (PushbroomLab + pushbroomScene)
+    traverse/             the scroll-scrubbed traverse's three.js scene (traverseScene.ts)
     projects/             sticky project stack, its jump index, and the six interactive "instruments"
       visuals/planner*    the route-planning demo: plannerEngine (terrain, sunlight, searches), plannerRender (canvas), PlannerVisual (UI)
     research/             TransitLab (HAT-P-18 b)
@@ -86,6 +87,24 @@ the first ~76 m as a glowing ribbon with waypoint diamonds, glides between succe
 in orange (marching squares over the same risk map). The readout beside the LiDAR panel shows the planner's latest plan, straight from the scene.
 The terrain is synthetic and the limits are illustrative: it demonstrates the technique, and says nothing about any real mission or tool.
 
+## The traverse, briefly
+
+`Traverse.tsx` is the hero's world scrubbed by scroll: the same terrain, point shader, scan plane and route planner, seen from behind the rover
+instead of from its mast. `traverseScene.ts` imports the hero's point-cloud `Layer`, scan-fan and star shaders from `terrainScene.ts` (they are
+exported, not copied) and the planner from `routePlanner.ts`, so the two scenes cannot drift apart.
+
+One plan covers the whole traverse (a 31 m-wide, ~196 m window, planned once, in about ten milliseconds), and scrolling drives the rover along it:
+
+- **A, Survey** — the pushbroom line sweeps the ground (dense behind it, sparse ahead); the four waypoint diamonds are the survey's targets.
+- **B, Plan** — the route draws itself out from the rover, with the ground steeper than the planner's 25° limit outlined in orange.
+- **C, Build** — the rover, a LiDAR scan of itself (points sampled over its surfaces), is scanned into existence by a laser line from the wheels up.
+- **D, Arrive** — the last diamond fills in and a ranging ping goes out.
+
+The readout panel beside the copy is the hero's panel style, driven by the same field: distance, surface height, slope under and ahead of the rover,
+points acquired (25 Hz × 541 points per scan at the hero rover's speed), distance to the next waypoint, and the planner's route length, steepest cell
+and planning time. The terrain is synthetic and the figures are illustrative, as in the hero. The scene is built when the section is a screen or two
+away and pauses off-screen; the scroll distance is `motion-safe:h-[520svh]` on the section.
+
 ## Performance
 
 - Initial JS ≈ **295 KB gzipped**. three.js is *not* in it — every 3D scene is dynamically imported when its section nears the viewport.
@@ -105,7 +124,8 @@ What it is **not**: the terrain is synthetic and the parameters are illustrative
 
 - Semantic landmarks, a skip link, and a focus-trapped menu and lightbox (Esc closes; focus returns to the trigger)
 - `prefers-reduced-motion`: no preloader, no smooth-scroll hijack, no scroll-linked animation; the hero renders a single still frame and every
-  instrument shows its settled state
+  instrument shows its settled state; the traverse is a still frame too, and its four stages become cards below it
+- The traverse keeps all four stages in the page for assistive tech, and tabbing into one of them moves the pinned scene to that stage
 - Every interactive instrument has text equivalents (`aria-label`s, live readouts) and works from the keyboard (sliders, buttons). In the route planner the A/B pins move with the arrow keys (Shift = 5 cells), the drive scrubber is a real slider, and every plan is announced in a live region
 - Custom cursor is enabled for fine pointers only; the native cursor is untouched on touch devices and inside form controls
 - If WebGL is unavailable the hero falls back to a static gradient and each 3D instrument shows a short notice; all readouts keep working
