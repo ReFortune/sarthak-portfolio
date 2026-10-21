@@ -36,8 +36,8 @@ export function Copy({
   const justify = valign === "top" ? `justify-start ${tall}` : valign === "bottom" ? "justify-end" : `justify-center ${tall}`;
   const d = (on: string) => (panel ? on : "");
   return (
-    <div className={`wrap flex h-full flex-col pb-[clamp(4.5rem,9vh,6rem)] pt-[clamp(6rem,13vh,8.5rem)] ${justify} ${d("dock:justify-end md:pb-[10.5rem] dock:pb-[clamp(4.5rem,9vh,6rem)]")}`}>
-      <div className={`${size === "sm" ? "max-w-[34rem] md:max-w-[42rem]" : "max-w-[34rem] md:max-w-[38rem]"} ${right ? "lg:ml-auto" : ""} ${d("dock:!ml-0 dock:max-w-[min(27rem,34vw)]")}`}>
+    <div className={`wrap flex h-full flex-col pb-[clamp(4.5rem,9vh,6rem)] pt-[clamp(6rem,13vh,8.5rem)] ${justify} ${d("dock:justify-end md:pb-[10.5rem] dock:!pb-[clamp(4.5rem,9vh,6rem)]")}`}>
+      <div className={`${size === "sm" ? "max-w-[34rem] md:max-w-[42rem]" : "max-w-[34rem] md:max-w-[38rem]"} ${right ? "lg:ml-auto" : ""} ${d("dock:!ml-0 dock:!max-w-[min(27rem,34vw)]")}`}>
         {eyebrow && (
           <p className={`label label-strong mb-5 flex items-center gap-3 ${d("dock:mb-3")}`}>
             <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-laser [animation:blink_1.4s_infinite]" />

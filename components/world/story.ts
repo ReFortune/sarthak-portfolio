@@ -123,7 +123,7 @@ export const EXHIBIT_PROJECT: Record<string, string> = {
    ───────────────────────────────────────────────────────────────────────── */
 
 export type PanelId =
-  | "scan" | "survey" | "plan" | "sparrow" | "mpt" | "chiron" | "routem" | "oscar" | "nova"
+  | "scan" | "about" | "survey" | "plan" | "sparrow" | "mpt" | "chiron" | "routem" | "oscar" | "nova"
   | "crew" | "transit" | "toolkit" | "path";
 
 type PanelDef = {
@@ -142,8 +142,9 @@ const held = (id: BeatId) => {
 };
 
 export const PANEL_DEFS: PanelDef[] = [
-  // the sensor's own readout: the first three stops, until the camera leaves the rover's side
-  { id: "scan", beat: "threshold", from: 0.22, to: 2 + held("why") + 0.04, shift: false },
+  // the sensor's own readout over the first two stops, then who is behind it
+  { id: "scan", beat: "threshold", from: 0.22, to: 1.9, shift: false },
+  { id: "about", beat: "why", from: -0.04, to: held("why") + 0.04, shift: true },
   { id: "survey", beat: "survey", from: 0.04, to: 0.96, shift: true },
   { id: "plan", beat: "plan", from: 0.04, to: 0.96, shift: true },
   // the camera is at each pose of the ring for the first `hold` of its beat

@@ -29,10 +29,11 @@ function useEnv(ref: React.RefObject<HTMLElement | null>, slide: number) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const apply = () => {
       const e = panelEnv.get();
       el.style.opacity = e.toFixed(3);
-      el.style.transform = slide ? `translate3d(${((1 - e) * slide).toFixed(1)}px, 0, 0)` : "";
+      el.style.transform = slide && !still ? `translate3d(${((1 - e) * slide).toFixed(1)}px, 0, 0)` : "";
       el.style.visibility = e > 0.01 ? "visible" : "hidden";
       el.style.pointerEvents = e > 0.6 ? "auto" : "none";
     };

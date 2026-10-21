@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { timeline, type TimelineKind, type TimelineRow } from "@/data/timeline";
 import { ymToYear } from "@/lib/math";
-import { dossierStore, focusStore, type DossierRef } from "@/lib/world-store";
+import { dossierStore, focusStore, sheetStore, type DossierRef } from "@/lib/world-store";
 import { D0, SPAN, YEARS, fmt, kindStyle, nowYear, pct } from "../../sections/timelineKit";
 
 /** What a row opens in the dossier. */
@@ -70,6 +70,7 @@ export default function TimelinePanel() {
                   onBlur={() => setHover(null)}
                   onClick={() => {
                     setHover(r.id);
+                    sheetStore.set(false);
                     dossierStore.set(recordOf(r));
                   }}
                   data-cursor="link"

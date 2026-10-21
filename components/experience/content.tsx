@@ -85,6 +85,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
   why: (
     <Copy
       size="sm"
+      panel
       eyebrow="About"
       title={
         <>

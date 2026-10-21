@@ -40,6 +40,7 @@ type Loader = () => Promise<{ default: ComponentType }>;
 /** The code for each, so it can be fetched ahead of its stop. */
 const loaders: Record<PanelId, Loader> = {
   scan: () => import("./panels/ScanReadout"),
+  about: () => import("./panels/AboutPanel"),
   survey: () => import("./panels/LabPanel"),
   plan: () => import("./panels/PlannerPanel").then((m) => ({ default: m.Fork })),
   sparrow: () => import("../sections/projects/visuals/SparrowVisual"),
@@ -73,6 +74,14 @@ const list: Omit<Instrument, "Body">[] = [
     size: "auto",
     what: "",
     hint: T,
+  },
+  {
+    id: "about",
+    fig: "About",
+    title: "Hello, I’m Sarthak",
+    size: "auto",
+    what: "The photo is the one I use. Point at it and a loupe redraws it the way the rover sees the world, as returns. Underneath: why space, what I have learned, and where I am going.",
+    hint: { fine: "Hover the photo · pick a tab", coarse: "Tap the photo · pick a tab" },
   },
   {
     id: "survey",

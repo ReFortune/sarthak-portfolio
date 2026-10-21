@@ -58,8 +58,11 @@ export default function Experience() {
     /* the instrument that belongs to this stretch of the story, and how fully it is on show */
     const x = index + (u - beats[index].u0) / (beats[index].u1 - beats[index].u0);
     const { id, env } = panelAt(x);
-    panelStore.set(id);
-    panelEnv.set(env);
+    // (an open sheet keeps the instrument it was opened on, whatever a resize does to the scroll position)
+    if (!sheetStore.get()) {
+      panelStore.set(id);
+      panelEnv.set(env);
+    }
     // fetch the next one's code before it is wanted
     const ahead = panelAt(x + 0.9).id;
     if (ahead && ahead !== id) preload(ahead);
