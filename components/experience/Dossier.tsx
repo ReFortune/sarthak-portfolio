@@ -50,10 +50,17 @@ export default function Dossier() {
     if (open) panel.current?.querySelector<HTMLElement>("[data-scroll]")?.scrollTo({ top: 0 });
   }, [want?.kind, want?.id, open]);
 
-  // navigating away closes it
+  // navigating away closes it, and a drawer that is torn down while open must not leave the page locked
   useEffect(() => {
     dossierStore.set(null);
   }, [pathname]);
+  useEffect(
+    () => () => {
+      if (dossierStore.get()) startScroll();
+      dossierStore.set(null);
+    },
+    []
+  );
 
   /* Esc closes; Tab stays inside the drawer */
   useEffect(() => {
