@@ -1,8 +1,10 @@
 import * as THREE from "three";
-import { corridorX, heightAt, normalAt, raycast, hash2, rampColor, type Hit } from "@/lib/terrain";
+import { corridorX, heightAt, normalAt, raycast, hash2, type Hit } from "@/lib/terrain";
 import { clamp, damp, lerp, smoothstep } from "@/lib/math";
 import { RoutePlanner, createPlan } from "@/components/hero/routePlanner";
 import { BETA, DESKTOP_LAYERS, FAN_FRAG, FAN_VERT, Layer, PING_N, STAR_FRAG, STAR_VERT, TRAIL_N, scaleLayers, type LayerSpec } from "@/components/hero/terrainScene";
+import { HEAD, WHEEL_R, createRover } from "@/components/world/kit/rover";
+import { createRouteOverlay, routeAt as routeAtData, type RouteOverlay } from "@/components/world/kit/route";
 import type { PlanReadout } from "@/lib/store";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -92,252 +94,6 @@ function poseAt(p: number, out: Pose): Pose {
   out.ry = lerp(a.ry, b.ry, t);
   return out;
 }
-
-/* ── the rover, as a LiDAR scan of itself: points sampled over its surfaces ── */
-const WHEEL_R = 0.46;
-const WHEEL_HW = 0.17;
-const WHEELS: ReadonlyArray<readonly [number, number]> = [[1.07, 0.95], [-1.07, 0.95], [1.07, -0.95], [-1.07, -0.95]];
-/** Where the scan plane starts, in rover space (the sensor head on the mast). */
-const HEAD = new THREE.Vector3(0, 2.42, 0.85);
-const ROVER_TOP = 2.62;
-
-function buildRover(density: number) {
-  const pos: number[] = [], col: number[] = [], cen: number[] = [], seed: number[] = [], ys: number[] = [], hot: number[] = [], wheel: number[] = [];
-  let k = 0;
-  const rnd = () => hash2(k++, 5, 4242);
-  const rgb: [number, number, number] = [0, 0, 0];
-  const light = new THREE.Vector3(0.72, 0.3, 0.56).normalize();
-
-  const add = (x: number, y: number, z: number, nx: number, ny: number, nz: number, tone: number, h: number, w = 0, cx = 0, cy = 0, cz = 0) => {
-    const lit = clamp(nx * light.x + ny * light.y + nz * light.z, 0, 1);
-    rampColor(0.52 + lit * 0.4, rgb);
-    const m = tone * (0.5 + 0.8 * lit);
-    // pale towards bone, so the rover reads as an object against the blue ground
-    col.push(lerp(rgb[0], 0.93, 0.4) * m, lerp(rgb[1], 0.9, 0.4) * m, lerp(rgb[2], 0.84, 0.4) * m);
-    pos.push(x, y, z);
-    cen.push(cx, cy, cz);
-    seed.push(rnd());
-    ys.push(clamp(y / ROVER_TOP, 0, 1));
-    hot.push(h);
-    wheel.push(w);
-  };
-
-  const box = (cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, tone: number, h = 0, dens = density) => {
-    const faces: [number, number, number, number][] = [
-      [1, 0, 0, sy * sz], [-1, 0, 0, sy * sz], [0, 1, 0, sx * sz], [0, -1, 0, sx * sz], [0, 0, 1, sx * sy], [0, 0, -1, sx * sy],
-    ];
-    for (const [nx, ny, nz, area] of faces) {
-      const n = Math.max(2, Math.round(area * dens));
-      for (let i = 0; i < n; i++) {
-        const u = rnd() - 0.5, v = rnd() - 0.5;
-        if (nx) add(cx + (nx * sx) / 2, cy + u * sy, cz + v * sz, nx, 0, 0, tone, h);
-        else if (ny) add(cx + u * sx, cy + (ny * sy) / 2, cz + v * sz, 0, ny, 0, tone, h);
-        else add(cx + u * sx, cy + v * sy, cz + (nz * sz) / 2, 0, 0, nz, tone, h);
-      }
-    }
-  };
-
-  // chassis, axles, bumper, solar deck
-  box(0, 0.98, 0, 1.55, 0.5, 2.5, 0.9);
-  box(0, WHEEL_R, 0.95, 2.1, 0.1, 0.1, 0.7);
-  box(0, WHEEL_R, -0.95, 2.1, 0.1, 0.1, 0.7);
-  box(0, 0.8, 1.38, 1.7, 0.12, 0.12, 0.8);
-  box(0, 1.28, -0.5, 1.5, 0.05, 1.15, 0.75, 0, density * 0.8);
-
-  // wheels: tread denser than the faces, so each reads as a ring
-  for (const [wx, wz] of WHEELS) {
-    const side = Math.round(2 * Math.PI * WHEEL_R * 2 * WHEEL_HW * density * 1.5);
-    for (let i = 0; i < side; i++) {
-      const th = rnd() * Math.PI * 2;
-      add(wx + (rnd() * 2 - 1) * WHEEL_HW, WHEEL_R + Math.cos(th) * WHEEL_R, wz + Math.sin(th) * WHEEL_R, 0, Math.cos(th), Math.sin(th), 0.62, 0, 1, wx, WHEEL_R, wz);
-    }
-    const cap = Math.round(Math.PI * WHEEL_R * WHEEL_R * density);
-    for (const sx of [-1, 1]) {
-      for (let i = 0; i < cap; i++) {
-        const th = rnd() * Math.PI * 2;
-        const r = WHEEL_R * Math.sqrt(rnd());
-        add(wx + sx * WHEEL_HW, WHEEL_R + Math.cos(th) * r, wz + Math.sin(th) * r, sx, 0, 0, r < 0.12 ? 1 : 0.8, 0, 1, wx, WHEEL_R, wz);
-      }
-    }
-  }
-
-  // mast and sensor head (the head glows: it is the laser)
-  const mastN = Math.round(2 * Math.PI * 0.05 * 1.2 * density * 1.5);
-  for (let i = 0; i < mastN; i++) {
-    const th = rnd() * Math.PI * 2;
-    add(Math.cos(th) * 0.05, 1.23 + rnd() * 1.2, HEAD.z + Math.sin(th) * 0.05, Math.cos(th), 0, Math.sin(th), 0.8, 0);
-  }
-  box(0, HEAD.y, HEAD.z - 0.1, 0.62, 0.28, 0.36, 1, 0.3, density * 1.6);
-  box(0, HEAD.y, HEAD.z + 0.1, 0.34, 0.16, 0.06, 1, 1, density * 3);
-
-  const count = pos.length / 3;
-  return {
-    count,
-    pos: new Float32Array(pos),
-    color: new Float32Array(col),
-    center: new Float32Array(cen),
-    seed: new Float32Array(seed),
-    y: new Float32Array(ys),
-    hot: new Float32Array(hot),
-    wheel: new Float32Array(wheel),
-  };
-}
-
-const ROVER_VERT = /* glsl */ `
-  uniform float uPxPerUnit, uSize, uGain, uBuilt, uSpin, uTime;
-  attribute vec3 aColor, aCenter;
-  attribute float aSeed, aY, aHot, aWheel;
-  varying vec3 vColor;
-  varying float vAlpha;
-  void main() {
-    vec3 p = position;
-    if (aWheel > 0.5) {
-      vec3 q = p - aCenter;
-      float c = cos(uSpin), s = sin(uSpin);
-      p = aCenter + vec3(q.x, q.y * c - q.z * s, q.y * s + q.z * c);
-    }
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    float depth = max(0.25, -mv.z);
-    gl_Position = projectionMatrix * mv;
-
-    // built by a laser line that sweeps up from the wheels; before it passes, only a sparse ghost shows
-    float yS = uBuilt * 1.3 - 0.14;
-    float done = 1.0 - smoothstep(yS - 0.02, yS + 0.02, aY);
-    float band = exp(-pow((aY - yS) / 0.05, 2.0)) * step(0.002, uBuilt) * (1.0 - step(0.998, uBuilt));
-    float ghost = step(aSeed, 0.34);
-    float vis = max(max(done, ghost * 0.75), band);
-    float hot = clamp(band + aHot * (0.72 + 0.28 * sin(uTime * 6.0)), 0.0, 1.0);
-
-    vec3 hotCol = mix(vec3(1.0, 0.34, 0.16), vec3(1.0, 0.88, 0.74), smoothstep(0.6, 1.0, hot));
-    vColor = mix(aColor * 1.4, hotCol, pow(hot, 0.85));
-    vAlpha = vis * uGain;
-    float size = uSize * uPxPerUnit / depth * (0.8 + 0.4 * aSeed) * (1.0 + 1.2 * hot);
-    gl_PointSize = clamp(size, 1.4, 8.0);
-  }
-`;
-const SOFT_FRAG = /* glsl */ `
-  varying vec3 vColor;
-  varying float vAlpha;
-  void main() {
-    vec2 c = gl_PointCoord - 0.5;
-    float d2 = dot(c, c) * 4.0;
-    float a = 0.65 * exp(-d2 * 3.4) + 0.35 * smoothstep(0.42, 0.0, d2);
-    float alpha = vAlpha * a;
-    if (alpha < 0.004) discard;
-    gl_FragColor = vec4(vColor, alpha);
-  }
-`;
-
-/* ── route: a ribbon along the plan (constant width on screen) with a dark stroke under it, diamonds at the
-      waypoints, and an outline around the steep ground it avoids. The same look as the hero's, measured from the rover ── */
-
-const RIB_VERT = /* glsl */ `
-  uniform vec2 uRes;
-  uniform float uWidth, uGain, uTime, uReveal, uShow, uS0, uFlow;
-  attribute vec3 aPrev, aNext;
-  attribute float aSide, aS;
-  varying float vSide, vA, vPulse;
-
-  vec2 toPx(vec4 c) { return c.xy / c.w * uRes * 0.5; }
-
-  void main() {
-    mat4 mvp = projectionMatrix * modelViewMatrix;
-    vec4 c0 = mvp * vec4(position, 1.0);
-    vec2 p0 = toPx(c0);
-    vec2 d = toPx(mvp * vec4(aNext, 1.0)) - toPx(mvp * vec4(aPrev, 1.0));
-    d = dot(d, d) > 1e-4 ? normalize(d) : vec2(0.0, 1.0);
-    vec2 px = p0 + vec2(-d.y, d.x) * aSide * uWidth * 0.5;
-    gl_Position = vec4(px / (uRes * 0.5) * c0.w, c0.z, c0.w);
-
-    float depth = max(0.25, -(modelViewMatrix * vec4(position, 1.0)).z);
-    float ahead = aS - uS0;                                       // metres ahead of the rover, along the route
-    float behind = smoothstep(1.0, 2.8, ahead);                   // the ribbon leaves the rover's nose; nothing is drawn behind it
-    float rev = 1.0 - smoothstep(uReveal - 9.0, uReveal, ahead);  // the plan sweeps out from the rover
-    float far = 1.0 - smoothstep(uShow * 0.62, uShow, ahead);     // and thins out with distance
-    float near = smoothstep(2.0, 5.0, depth);
-    float wave = 0.5 + 0.5 * sin((aS - uTime * 9.0) * 0.8);       // a pulse streams along the route, away from the rover
-    vPulse = wave * wave * wave * uFlow;
-    vSide = aSide;
-    vA = behind * rev * far * near * uGain * (0.72 + 0.28 * vPulse);
-  }
-`;
-const RIB_FRAG = /* glsl */ `
-  varying float vSide, vA, vPulse;
-  void main() {
-    float e = abs(vSide);
-    float core = smoothstep(0.32, 0.0, e);
-    float body = exp(-e * e * 4.0);
-    float a = vA * (1.0 * core + 0.5 * body);
-    if (a < 0.004) discard;
-    vec3 col = mix(vec3(0.66, 0.9, 1.0), vec3(1.0, 0.97, 0.92), clamp(vPulse * 0.9 + core * 0.35, 0.0, 1.0));
-    gl_FragColor = vec4(col, a);
-  }
-`;
-const RIB_UNDER_FRAG = /* glsl */ `
-  varying float vSide, vA, vPulse;
-  void main() {
-    float a = vA * 0.7 * smoothstep(1.0, 0.25, abs(vSide));
-    if (a < 0.004) discard;
-    gl_FragColor = vec4(0.024, 0.027, 0.043, a);
-  }
-`;
-const WAY_VERT = /* glsl */ `
-  uniform float uPxPerUnit, uGain, uSize, uS0, uArrive;
-  attribute float aS;
-  varying float vA, vReached;
-  void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    float depth = max(0.25, -mv.z);
-    gl_Position = projectionMatrix * mv;
-    vReached = 1.0 - smoothstep(uArrive + 0.5, uArrive + 3.0, aS - uS0);   // filled as the rover pulls in
-    vA = uGain;
-    gl_PointSize = clamp(uSize * uPxPerUnit / depth, 9.0, 30.0);
-  }
-`;
-const WAY_FRAG = /* glsl */ `
-  varying float vA, vReached;
-  void main() {
-    vec2 c = (gl_PointCoord - 0.5) * 2.0;
-    float d = abs(c.x) + abs(c.y);                       // a diamond
-    float ring = smoothstep(1.0, 0.88, d) - smoothstep(0.62, 0.5, d);
-    float dot_ = smoothstep(0.26, 0.12, d);
-    float fill = smoothstep(0.62, 0.5, d) * vReached;
-    float a = vA * (0.95 * ring + 0.8 * dot_ + 0.5 * fill);
-    if (a < 0.004) discard;
-    gl_FragColor = vec4(mix(vec3(0.86, 0.97, 1.0), vec3(1.0, 0.36, 0.18), vReached), a);
-  }
-`;
-const CON_VERT = /* glsl */ `
-  uniform vec2 uRes;
-  uniform float uWidth, uGain, uRoverZ, uConGain;
-  attribute vec3 aPrev, aNext;
-  attribute float aSide, aW;
-  varying float vSide, vA;
-
-  vec2 toPx(vec4 c) { return c.xy / c.w * uRes * 0.5; }
-
-  void main() {
-    mat4 mvp = projectionMatrix * modelViewMatrix;
-    vec4 c0 = mvp * vec4(position, 1.0);
-    vec2 d = toPx(mvp * vec4(aNext, 1.0)) - toPx(mvp * vec4(aPrev, 1.0));
-    d = dot(d, d) > 1e-4 ? normalize(d) : vec2(0.0, 1.0);
-    vec2 px = toPx(c0) + vec2(-d.y, d.x) * aSide * uWidth * 0.5;
-    gl_Position = vec4(px / (uRes * 0.5) * c0.w, c0.z, c0.w);
-
-    float ahead = position.z - uRoverZ;
-    float fade = smoothstep(-6.0, 4.0, ahead) * (1.0 - smoothstep(48.0, 84.0, ahead));
-    vSide = aSide;
-    vA = fade * uConGain * uGain * (0.15 + 0.7 * aW);
-  }
-`;
-const CON_FRAG = /* glsl */ `
-  varying float vSide, vA;
-  void main() {
-    float a = vA * smoothstep(1.0, 0.0, abs(vSide));
-    if (a < 0.004) discard;
-    gl_FragColor = vec4(1.0, 0.36, 0.18, a);
-  }
-`;
 
 /** Layers for this view: like the hero's, but the nearest one is wider and starts closer, to carpet the ground around the rover. */
 const LAYERS: LayerSpec[] = DESKTOP_LAYERS.map((l, i) =>
@@ -454,189 +210,27 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
   const planner = new RoutePlanner({ step: opts.lowPower ? 0.8 : 0.5, ahead: AHEAD, show: SHOW });
   const plan = createPlan(opts.lowPower ? 340 : 540, 4000);
   const planInfo: { readout: PlanReadout | null; length: number } = { readout: null, length: 1 };
-  const RU = {
-    uRes: { value: new THREE.Vector2(1, 1) },
-    uTime: { value: 0 },
-    uReveal: { value: 0 },
-    uShow: { value: ROUTE_SHOW },
-    uS0: { value: 0 },
-    uArrive: { value: ARRIVE },
-    uFlow: { value: opts.reduced ? 0 : 1 },
-    uConGain: { value: 0 },
-    uRoverZ: { value: Z_START },
-    uPxPerUnit: U.uPxPerUnit,
-  };
-  const routeMat = new THREE.ShaderMaterial({
-    vertexShader: RIB_VERT, fragmentShader: RIB_FRAG,
-    uniforms: { ...RU, uGain: { value: 0 }, uWidth: { value: 10 } },
-    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-  });
-  const underMat = new THREE.ShaderMaterial({
-    vertexShader: RIB_VERT, fragmentShader: RIB_UNDER_FRAG,
-    uniforms: { ...RU, uGain: { value: 0 }, uWidth: { value: 16 } },
-    transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
-  });
-  const wayMat = new THREE.ShaderMaterial({
-    vertexShader: WAY_VERT, fragmentShader: WAY_FRAG,
-    uniforms: { ...RU, uGain: { value: 0 }, uSize: { value: 0.95 } },
-    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
-  });
-  const conMat = new THREE.ShaderMaterial({
-    vertexShader: CON_VERT, fragmentShader: CON_FRAG,
-    uniforms: { ...RU, uGain: { value: 0 }, uWidth: { value: 2.4 } },
-    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-  });
-  const routeGeos: THREE.BufferGeometry[] = [];
-  const wayPos = new Float32Array(STAGE_END.length * 3);
-  const wayS = new Float32Array(STAGE_END.length);
+  let overlay: RouteOverlay | null = null;
 
   /** Build the ribbon, the diamonds and the steep-ground outline from the finished plan. */
   function buildRoute() {
-    const n = plan.n;
-    const rp = new Float32Array(n * 2 * 3), rPrev = new Float32Array(n * 2 * 3), rNext = new Float32Array(n * 2 * 3);
-    const rSide = new Float32Array(n * 2), rS = new Float32Array(n * 2);
-    const idx = new Uint16Array((n - 1) * 6);
-    for (let k = 0; k < n; k++) {
-      const p = k * 3, a = Math.max(0, k - 1) * 3, b = Math.min(n - 1, k + 1) * 3;
-      for (let side = 0; side < 2; side++) {
-        const o = (2 * k + side) * 3;
-        for (let c = 0; c < 3; c++) {
-          rp[o + c] = plan.pos[p + c];
-          rPrev[o + c] = plan.pos[a + c];
-          rNext[o + c] = plan.pos[b + c];
-        }
-        rSide[2 * k + side] = side === 0 ? -1 : 1;
-        rS[2 * k + side] = plan.s[k];
-      }
-      if (k < n - 1) idx.set([2 * k, 2 * k + 1, 2 * k + 2, 2 * k + 1, 2 * k + 3, 2 * k + 2], k * 6);
-    }
-    const ribGeo = new THREE.BufferGeometry();
-    ribGeo.setAttribute("position", new THREE.BufferAttribute(rp, 3));
-    ribGeo.setAttribute("aPrev", new THREE.BufferAttribute(rPrev, 3));
-    ribGeo.setAttribute("aNext", new THREE.BufferAttribute(rNext, 3));
-    ribGeo.setAttribute("aSide", new THREE.BufferAttribute(rSide, 1));
-    ribGeo.setAttribute("aS", new THREE.BufferAttribute(rS, 1));
-    ribGeo.setIndex(new THREE.BufferAttribute(idx, 1));
-    const under = new THREE.Mesh(ribGeo, underMat);
-    const ribbon = new THREE.Mesh(ribGeo, routeMat);
-    under.renderOrder = 10;
-    ribbon.renderOrder = 11;
-
-    // one diamond at the end of each stage
-    const L = plan.s[n - 1];
-    STAGE_END.forEach((f, i) => {
-      const target = f * L;
-      let k = 1;
-      while (k < n - 1 && plan.s[k] < target) k++;
-      wayPos[i * 3] = plan.pos[k * 3];
-      wayPos[i * 3 + 1] = plan.pos[k * 3 + 1] + 0.55;
-      wayPos[i * 3 + 2] = plan.pos[k * 3 + 2];
-      wayS[i] = plan.s[k];
-    });
-    const wayGeo = new THREE.BufferGeometry();
-    wayGeo.setAttribute("position", new THREE.BufferAttribute(wayPos, 3));
-    wayGeo.setAttribute("aS", new THREE.BufferAttribute(wayS, 1));
-    const waypoints = new THREE.Points(wayGeo, wayMat);
-    waypoints.renderOrder = 12;
-
-    // steep-ground outline: a short ribbon per segment (4 vertices each, both ends know the segment's direction)
-    const m = plan.segN;
-    const cPos = new Float32Array(m * 4 * 3), cPrev = new Float32Array(m * 4 * 3), cNext = new Float32Array(m * 4 * 3);
-    const cSide = new Float32Array(m * 4), cW = new Float32Array(m * 4);
-    const cIdx = new Uint32Array(m * 6);
-    for (let q = 0; q < m; q++) {
-      const o = q * 7;
-      cSide.set([-1, 1, -1, 1], q * 4);
-      cIdx.set([q * 4, q * 4 + 1, q * 4 + 2, q * 4 + 1, q * 4 + 3, q * 4 + 2], q * 6);
-      for (let v = 0; v < 4; v++) {
-        const e = (q * 4 + v) * 3;
-        const end = v < 2 ? 0 : 3; // vertices 0, 1 sit at the segment's start, 2, 3 at its end
-        for (let c = 0; c < 3; c++) {
-          cPos[e + c] = plan.seg[o + end + c];
-          cPrev[e + c] = plan.seg[o + c];
-          cNext[e + c] = plan.seg[o + 3 + c];
-        }
-        cW[q * 4 + v] = plan.seg[o + 6];
-      }
-    }
-    const conGeo = new THREE.BufferGeometry();
-    conGeo.setAttribute("position", new THREE.BufferAttribute(cPos, 3));
-    conGeo.setAttribute("aPrev", new THREE.BufferAttribute(cPrev, 3));
-    conGeo.setAttribute("aNext", new THREE.BufferAttribute(cNext, 3));
-    conGeo.setAttribute("aSide", new THREE.BufferAttribute(cSide, 1));
-    conGeo.setAttribute("aW", new THREE.BufferAttribute(cW, 1));
-    conGeo.setIndex(new THREE.BufferAttribute(cIdx, 1));
-    const contour = new THREE.Mesh(conGeo, conMat);
-    contour.renderOrder = 9;
-
-    for (const o of m > 0 ? [contour, under, ribbon, waypoints] : [under, ribbon, waypoints]) {
-      o.frustumCulled = false;
-      scene.add(o);
-    }
-    routeGeos.push(ribGeo, wayGeo, conGeo);
+    const L = plan.s[plan.n - 1];
+    overlay = createRouteOverlay(plan, STAGE_END.map((f) => f * L), { reduced: opts.reduced, pxPerUnit: U.uPxPerUnit, show: ROUTE_SHOW, arrive: ARRIVE });
+    for (const o of overlay.objects) scene.add(o);
+    overlay.setResolution(st.width, st.height, st.dpr);
     planInfo.length = L;
   }
 
-  /** Position and direction on the route at distance `s` along it. */
+  /** Position on the route at distance `s` along it. */
   const rp = { x: 0, y: 0, z: 0 };
-  function routeAt(s: number, out = rp) {
-    const n = plan.n;
-    const S = plan.s, P = plan.pos;
-    s = clamp(s, 0, S[n - 1]);
-    let lo = 0, hi = n - 1;
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >> 1;
-      if (S[mid] <= s) lo = mid;
-      else hi = mid;
-    }
-    const span = S[hi] - S[lo];
-    const t = span > 1e-6 ? (s - S[lo]) / span : 0;
-    out.x = lerp(P[lo * 3], P[hi * 3], t);
-    out.y = lerp(P[lo * 3 + 1], P[hi * 3 + 1], t);
-    out.z = lerp(P[lo * 3 + 2], P[hi * 3 + 2], t);
-    return out;
-  }
+  const routeAt = (s: number, out = rp) => routeAtData(plan, s, out);
 
   /* ── the rover ── */
-  const rover = new THREE.Group();
-  rover.rotation.order = "YXZ";
+  const roverObj = createRover({ lowPower: opts.lowPower, pxPerUnit: U.uPxPerUnit });
+  const rover = roverObj.group;
   scene.add(rover);
-  const rd = buildRover(opts.lowPower ? 150 : 250);
-  const roverGeo = new THREE.BufferGeometry();
-  roverGeo.setAttribute("position", new THREE.BufferAttribute(rd.pos, 3));
-  roverGeo.setAttribute("aColor", new THREE.BufferAttribute(rd.color, 3));
-  roverGeo.setAttribute("aCenter", new THREE.BufferAttribute(rd.center, 3));
-  roverGeo.setAttribute("aSeed", new THREE.BufferAttribute(rd.seed, 1));
-  roverGeo.setAttribute("aY", new THREE.BufferAttribute(rd.y, 1));
-  roverGeo.setAttribute("aHot", new THREE.BufferAttribute(rd.hot, 1));
-  roverGeo.setAttribute("aWheel", new THREE.BufferAttribute(rd.wheel, 1));
-  const roverU = { uPxPerUnit: U.uPxPerUnit, uSize: { value: 0.05 }, uGain: { value: 1 }, uBuilt: { value: 0 }, uSpin: { value: 0 }, uTime: { value: 0 } };
-  const roverMat = new THREE.ShaderMaterial({
-    vertexShader: ROVER_VERT, fragmentShader: SOFT_FRAG, uniforms: roverU,
-    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
-  });
-  const roverPts = new THREE.Points(roverGeo, roverMat);
-  roverPts.frustumCulled = false;
-  roverPts.renderOrder = 14;
-  rover.add(roverPts);
-
-  // a dark body under the points, so the rover blocks the ground behind it the way the route's dark stroke does
-  const hullMat = new THREE.MeshBasicMaterial({ color: 0x06070b, transparent: true, opacity: 0.2, depthTest: false, depthWrite: false });
-  const hullGeos: THREE.BufferGeometry[] = [];
-  const hull = (geo: THREE.BufferGeometry, x: number, y: number, z: number, rotZ = 0) => {
-    hullGeos.push(geo);
-    const m = new THREE.Mesh(geo, hullMat);
-    m.position.set(x, y, z);
-    m.rotation.z = rotZ;
-    m.renderOrder = 13;
-    m.frustumCulled = false;
-    rover.add(m);
-  };
-  hull(new THREE.BoxGeometry(1.5, 0.5, 2.44), 0, 0.98, 0);
-  hull(new THREE.BoxGeometry(1.46, 0.06, 1.1), 0, 1.27, -0.5);
-  hull(new THREE.BoxGeometry(0.58, 0.26, 0.5), 0, HEAD.y, HEAD.z);
-  hull(new THREE.BoxGeometry(0.1, 1.2, 0.1), 0, 1.83, HEAD.z);
-  for (const [wx, wz] of WHEELS) hull(new THREE.CylinderGeometry(WHEEL_R * 0.98, WHEEL_R * 0.98, WHEEL_HW * 2, 16), wx, WHEEL_R, wz, Math.PI / 2);
+  const roverU = roverObj.uniforms;
+  const hullMat = roverObj.hullMat;
 
   /* ── state ── */
   const st = {
@@ -685,10 +279,7 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
     camera.updateProjectionMatrix();
     U.uPxPerUnit.value = (h * dpr) / (2 * Math.tan((camera.fov * Math.PI) / 360));
     starU.uPx.value = dpr * (w < 700 ? 0.9 : 1.15);
-    RU.uRes.value.set(w * dpr, h * dpr);
-    routeMat.uniforms.uWidth.value = (w < 700 ? 10 : 13) * dpr;
-    underMat.uniforms.uWidth.value = (w < 700 ? 15 : 19) * dpr;
-    conMat.uniforms.uWidth.value = 2.4 * dpr;
+    overlay?.setResolution(w, h, dpr);
     if (opts.reduced && st.ready) frame(0.016);
   }
 
@@ -817,17 +408,20 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
   function updateStages() {
     const p = st.p;
     const intro = smoothstep(0.55, 1, st.introK);
-    RU.uTime.value = st.t;
-    RU.uS0.value = st.s;
-    RU.uRoverZ.value = rovPos.z;
-    RU.uReveal.value = smoothstep(0.27, 0.46, p) * (SHOW + 14);
-    RU.uShow.value = lerp(ROUTE_SHOW, 44, smoothstep(0.55, 0.7, p)); // close to the rover, the route is shorter: the build and arrival stages are about what is here
-    RU.uConGain.value = smoothstep(0.3, 0.48, p) * intro;
-    conMat.uniforms.uGain.value = intro;
-    // the route and its diamonds belong to the plan; before the plan stage only the diamonds (the survey's targets) show
-    routeMat.uniforms.uGain.value = intro * smoothstep(0.26, 0.3, p);
-    underMat.uniforms.uGain.value = intro * smoothstep(0.26, 0.3, p);
-    wayMat.uniforms.uGain.value = intro;
+    const o = overlay;
+    if (o) {
+      o.shared.uTime.value = st.t;
+      o.shared.uS0.value = st.s;
+      o.shared.uRoverZ.value = rovPos.z;
+      o.shared.uReveal.value = smoothstep(0.27, 0.46, p) * (SHOW + 14);
+      o.shared.uShow.value = lerp(ROUTE_SHOW, 44, smoothstep(0.55, 0.7, p)); // close to the rover, the route is shorter: the build and arrival stages are about what is here
+      o.shared.uConGain.value = smoothstep(0.3, 0.48, p) * intro;
+      o.gains.con.value = intro;
+      // the route and its diamonds belong to the plan; before the plan stage only the diamonds (the survey's targets) show
+      o.gains.ribbon.value = intro * smoothstep(0.26, 0.3, p);
+      o.gains.under.value = intro * smoothstep(0.26, 0.3, p);
+      o.gains.way.value = intro;
+    }
     roverU.uBuilt.value = smoothstep(0.5, 0.68, p);
     roverU.uGain.value = intro;
     roverU.uTime.value = st.t;
@@ -849,7 +443,9 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
     const age = st.t - st.pingBorn;
     const life = 3.4;
     if (age < 0 || age > life) { v.w = 0; return; }
-    v.set(wayPos[(STAGE_END.length - 1) * 3], wayPos[(STAGE_END.length - 1) * 3 + 2], age * 26, Math.pow(1 - age / life, 1.4));
+    const wp = overlay?.wayPos;
+    if (!wp) return;
+    v.set(wp[(STAGE_END.length - 1) * 3], wp[(STAGE_END.length - 1) * 3 + 2], age * 26, Math.pow(1 - age / life, 1.4));
   }
 
   function telemetry(): Telemetry {
@@ -858,8 +454,9 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
     const n1 = normalAt(x + Math.sin(st.heading) * 4, z + Math.cos(st.heading) * 4);
     const flat = Math.min(n0[1], n1[1]); // the steeper of the two, as the cosine of the slope
     let next: number | null = null;
-    for (let i = 0; i < STAGE_END.length; i++) {
-      if (wayS[i] - st.s > ARRIVE + 1.5) { next = wayS[i] - st.s; break; }
+    const ws = overlay?.wayS;
+    for (let i = 0; ws && i < STAGE_END.length; i++) {
+      if (ws[i] - st.s > ARRIVE + 1.5) { next = ws[i] - st.s; break; }
     }
     return {
       stage: Math.min(3, Math.floor(st.p * 4)),
@@ -1032,8 +629,8 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
         s: st.s, p: st.p, planLength: planInfo.length, ready: st.ready, introK: st.introK,
         rover: [rovPos.x, rovPos.y, rovPos.z], cam: camera.position.toArray(), heading: st.heading,
         roverPx: px(rovPos.x, rovPos.y + 1, rovPos.z), headPx: px(head.x, head.y, head.z),
-        waypoints: Array.from({ length: STAGE_END.length }, (_, i) => px(wayPos[i * 3], wayPos[i * 3 + 1], wayPos[i * 3 + 2])),
-        points: rd.count,
+        waypoints: Array.from({ length: STAGE_END.length }, (_, i) => px(overlay?.wayPos[i * 3] ?? 0, overlay?.wayPos[i * 3 + 1] ?? 0, overlay?.wayPos[i * 3 + 2] ?? 0)),
+        points: roverObj.count,
       };
     },
     dispose() {
@@ -1045,10 +642,8 @@ export function createTraverseScene(canvas: HTMLCanvasElement, opts: TraverseOpt
       starGeo.dispose(); (stars.material as THREE.Material).dispose();
       fanGeo.dispose(); fanMat.dispose(); beamGeo.dispose(); beamMat.dispose();
       emitter.geometry.dispose(); (emitter.material as THREE.Material).dispose();
-      routeGeos.forEach((g) => g.dispose());
-      routeMat.dispose(); underMat.dispose(); wayMat.dispose(); conMat.dispose();
-      roverGeo.dispose(); roverMat.dispose();
-      hullGeos.forEach((g) => g.dispose()); hullMat.dispose();
+      overlay?.dispose();
+      roverObj.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
     },

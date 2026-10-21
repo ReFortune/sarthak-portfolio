@@ -34,7 +34,7 @@ const beats: Beat[] = [
     body: "At the Canadian Space Agency I characterised a LiDAR to 1 cm ranging accuracy, then traded four pushbroom configurations for Artemis 4 surface mapping.",
     stat: "1 cm",
     statLabel: "LiDAR ranging accuracy characterised",
-    cta: { href: "/#trade-study", label: "Trade study", text: "Run the trade study" },
+    cta: { href: "/archive#trade-study", label: "Trade study", text: "Run the trade study" },
   },
   {
     title: (
@@ -56,7 +56,7 @@ const beats: Beat[] = [
     body: "I lead a 9-person team building Sparrow, a reconfigurable 1:10-scale wheeled rover test platform for the Canadian Space Agency.",
     stat: "≈ $1,500",
     statLabel: "Sparrow target build cost",
-    cta: { href: "/#projects", label: "Projects", text: "See the projects" },
+    cta: { href: "/archive#projects", label: "Projects", text: "See the projects" },
   },
   {
     title: (
@@ -67,7 +67,7 @@ const beats: Beat[] = [
     body: "From a 40 km balloon flight to a Mars orbiter design, the work is the same: measure carefully, then plan the way.",
     stat: "40 km",
     statLabel: "NOVA payload flight altitude",
-    cta: { href: "/#contact", label: "Contact", text: "Say hello" },
+    cta: { href: "/archive#contact", label: "Contact", text: "Say hello" },
   },
 ];
 

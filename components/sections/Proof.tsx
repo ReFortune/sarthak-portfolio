@@ -9,7 +9,7 @@ const proofs = [
     statLabel: "smallest obstacle the rover scanner detects",
     body: "Four pushbroom LiDAR configurations traded for Artemis 4 surface mapping — then built as an interactive scanner you can run.",
     cta: "Run the trade study",
-    href: "/#trade-study",
+    href: "/archive#trade-study",
     label: "Trade study",
   },
   {

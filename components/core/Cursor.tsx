@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { cursorReadout, useStore } from "@/lib/store";
+import { hoverStore } from "@/lib/world-store";
 
 /**
  * Custom cursor (fine pointers only).
@@ -54,7 +55,15 @@ export default function Cursor() {
     // natively interactive wins — so a button inside a "scan" region still reads as a link.
     const INTERACTIVE = "a, button, [role='button'], summary, label, input[type='range']";
     const FORM = "input:not([type='range']), textarea, select, video[controls]";
+    let lastTarget: EventTarget | null = null;
     const setState = (t: EventTarget | null) => {
+      lastTarget = t;
+      // an instrument in the 3-D world is under the pointer: it can be opened
+      if (hoverStore.get()) {
+        el.dataset.state = "view";
+        bubbleLabel.textContent = "Open";
+        return;
+      }
       let node = t as HTMLElement | null;
       while (node && node !== document.body) {
         const s = node.dataset?.cursor;
@@ -74,6 +83,7 @@ export default function Cursor() {
     const up = () => delete el.dataset.pressed;
     const leave = () => delete el.dataset.visible, enter = () => shown && (el.dataset.visible = "1");
 
+    const unsubHover = hoverStore.subscribe(() => setState(lastTarget));
     window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("pointerover", over, { passive: true });
     window.addEventListener("pointerdown", down, { passive: true });
@@ -82,6 +92,7 @@ export default function Cursor() {
     document.documentElement.addEventListener("pointerenter", enter);
 
     return () => {
+      unsubHover();
       document.documentElement.classList.remove("has-cursor");
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerover", over);
