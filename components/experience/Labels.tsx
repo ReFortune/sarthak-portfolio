@@ -33,7 +33,7 @@ export default function Labels({ source }: { source: () => Label[] }) {
     const tick = () => {
       raf = requestAnimationFrame(tick);
       if (document.hidden) return;
-      const narrow = host.clientWidth < 760;
+      const narrow = host.clientWidth < 900;
       const seen = new Set<string>();
       for (const l of source()) {
         const alpha = l.alpha ?? 1;
