@@ -125,7 +125,7 @@ export function createCrew(ctx: ClusterContext): Cluster {
         out.push({ id, text, x: s.x, y: s.y, visible: s.visible, side, alpha });
       };
       push("crew-bridge", "20 FT COMPETITION BRIDGE", [0, YT + 0.5, WD / 2], "top");
-      push("crew-team", "6 → 20 MEMBERS", [nodePos(9)[0] + 2, nodePos(9)[1], 0], "right");
+      push("crew-team", "6 → 20 MEMBERS", [nodePos(0)[0] - 2, nodePos(0)[1], 0], "left");
       return out;
     },
     dispose() {

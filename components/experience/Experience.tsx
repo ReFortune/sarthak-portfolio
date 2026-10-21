@@ -117,6 +117,16 @@ export default function Experience() {
     measure();
 
     (async () => {
+      // no WebGL (or it is switched off): the story is still all there in words, over a quiet gradient
+      try {
+        const probe = document.createElement("canvas");
+        const gl = (probe.getContext("webgl2") ?? probe.getContext("webgl")) as WebGLRenderingContext | null;
+        if (!gl) throw new Error("no webgl");
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
+      } catch {
+        markBoot("scene");
+        return;
+      }
       let mod: typeof import("@/components/world/world");
       try {
         mod = await import("@/components/world/world");
@@ -186,12 +196,17 @@ export default function Experience() {
       };
       const onDown = (e: PointerEvent) => {
         if ((e.target as HTMLElement).closest("a, button, [data-no-ping], [role='dialog']")) return;
-        const h = hoverStore.get();
-        if (h && EXHIBIT_PROJECT[h]) {
-          dossierStore.set({ kind: "project", id: EXHIBIT_PROJECT[h] });
-          return;
-        }
-        if (!reduced) world?.press();
+        if (!reduced && !hoverStore.get()) world?.press();
+      };
+      // a click (or a tap: a swipe is not one) on an instrument opens its dossier
+      const onClick = (e: MouseEvent) => {
+        if (!world || dossierStore.get() || (e.target as HTMLElement).closest("a, button, [data-no-ping], [role='dialog']")) return;
+        const r = el.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+        world.setPointer(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1), true);
+        const h = world.hovered();
+        if (h && EXHIBIT_PROJECT[h]) dossierStore.set({ kind: "project", id: EXHIBIT_PROJECT[h] });
+        else if (e.detail === 0 || (e as PointerEvent).pointerType === "touch") world.setPointer(0, 0, false);
       };
       const onLeave = () => {
         world?.setPointer(0, 0, false);
@@ -199,6 +214,7 @@ export default function Experience() {
       };
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerdown", onDown, { passive: true });
+      window.addEventListener("click", onClick);
       document.documentElement.addEventListener("pointerleave", onLeave);
       window.addEventListener("blur", onLeave);
       // which instrument is under the pointer
@@ -212,6 +228,7 @@ export default function Experience() {
       cleanups.push(() => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerdown", onDown);
+        window.removeEventListener("click", onClick);
         document.documentElement.removeEventListener("pointerleave", onLeave);
         window.removeEventListener("blur", onLeave);
         cancelAnimationFrame(hraf);

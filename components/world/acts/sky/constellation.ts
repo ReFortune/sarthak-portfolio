@@ -17,6 +17,8 @@ const W = 66;
 const H = 41;
 const COLOUR: Record<string, RGB> = { sim: TONE.ice, sw: TONE.bone, hw: TONE.amber, sys: TONE.laser };
 
+const SHORT: Record<string, string> = { sim: "SIMULATION", sw: "SOFTWARE", hw: "HARDWARE", sys: "SYSTEMS" };
+
 const place = (s: Star, z: number): V3 => [((s.x - 500) / 1000) * W, ((300 - s.y) / 600) * H, z];
 
 export function createConstellation(ctx: ClusterContext): Cluster {
@@ -91,16 +93,16 @@ export function createConstellation(ctx: ClusterContext): Cluster {
     labels(project, a) {
       const alpha = smoothstep(0.55, 0.92, a);
       const out: Label[] = [];
-      const push = (id: string, text: string, p: V3, side: Label["side"], kind: Label["kind"], minor?: boolean) => {
+      const push = (id: string, text: string, p: V3, side: Label["side"], kind: Label["kind"], minor?: boolean, short?: string) => {
         v.set(p[0], p[1], p[2]);
         group.localToWorld(v);
         const s = project(v);
-        out.push({ id, text, x: s.x, y: s.y, visible: s.visible, side, alpha, kind, minor });
+        out.push({ id, text, short, x: s.x, y: s.y, visible: s.visible, side, alpha, kind, minor });
       };
       for (const c of skillClusters) {
         const [cx, cy] = centroid(c.id);
         const off = c.id === "sim" || c.id === "sw" ? H * 0.5 + 1 : -H * 0.5 - 4;
-        push(`cl-${c.id}`, c.name.toUpperCase(), [cx, off, 0], "top", "cluster");
+        push(`cl-${c.id}`, c.name.toUpperCase(), [cx, off, 0], "top", "cluster", false, SHORT[c.id]);
       }
       for (const s of STARS) {
         const side = s.a === "r" ? "right" : s.a === "l" ? "left" : s.a === "t" ? "top" : "bottom";

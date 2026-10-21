@@ -54,7 +54,8 @@ export default function Labels({ source }: { source: () => Label[] }) {
           if (items.textContent !== lines) items.textContent = lines;
         } else {
           const t = el.lastElementChild as HTMLElement;
-          if (t.textContent !== l.text) t.textContent = l.text ?? "";
+          const text = (narrow && l.short) || l.text || "";
+          if (t.textContent !== text) t.textContent = text;
         }
       }
       for (const [id, el] of els) {

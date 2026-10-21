@@ -294,6 +294,8 @@ export class Layer {
   private readonly slotRow: Int32Array;
   private readonly tmp: [number, number, number] = [0, 0, 0];
   readonly count: number;
+  /** Where the middle of the point field is across the track at world z (the corridor, unless told otherwise). */
+  center: (z: number) => number = corridorX;
 
   constructor(private readonly spec: LayerSpec, shared: Record<string, THREE.IUniform>) {
     this.cols = Math.ceil((spec.xHalf * 2) / spec.dx);
@@ -370,7 +372,7 @@ export class Layer {
     const base = slot * cols;
     for (let i = 0; i < cols; i++) {
       const z = (j + hash2(i, j, seed + 1)) * dz;
-      const x = corridorX(z) + (i + hash2(i, j, seed + 2) - cols / 2) * dx;
+      const x = this.center(z) + (i + hash2(i, j, seed + 2) - cols / 2) * dx;
       const y = heightAt(x, z);
       const n = normalAt(x, z, y, Math.max(0.06, dx * 0.7));
 

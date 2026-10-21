@@ -60,6 +60,10 @@ export function createTerrain(opts: { lowPower: boolean; pxPerUnit: THREE.IUnifo
       }
       return all;
     },
+    /** Centre the point field on a line other than the corridor (before any rows are made). */
+    setCenter(fn: (z: number) => number) {
+      for (const l of layers) l.center = fn;
+    },
     setGain(g: number) {
       U.uGain.value = g;
       group.visible = g > 0.003;

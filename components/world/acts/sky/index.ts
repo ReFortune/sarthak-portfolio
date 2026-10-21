@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { clamp, smoothstep } from "@/lib/math";
+import { smoothstep } from "@/lib/math";
 import { SKY_STATIONS } from "../../layout";
 import { beats, type BeatId } from "../../story";
 import type { Act, ActContext, ActFrame, Label, Project } from "../types";
@@ -8,6 +8,7 @@ import { createCrew } from "./crew";
 import { createTransit } from "./transit";
 import { createConstellation } from "./constellation";
 import { createRings } from "./rings";
+import { createLimb } from "../../kit/limb";
 
 /* ─────────────────────────────────────────────────────────────────────────
    ACT IV — THE SKY. The camera climbs out of the ring, through a line of rings, to a point high above the plain and
@@ -28,6 +29,10 @@ export function createSky(ctx: ActContext): Act {
   const rings = createRings({ layout, lowPower: ctx.lowPower, pxPerUnit: ctx.pxPerUnit });
 
   const group = new THREE.Group();
+  // the planet below: it appears as the ground falls away
+  const c = layout.ring.center;
+  const limb = createLimb(8500, c.x, c.y, c.z);
+  group.add(limb.mesh);
   group.add(rings.group);
   for (const e of entries) group.add(e.cluster.group);
 
@@ -37,7 +42,10 @@ export function createSky(ctx: ActContext): Act {
     update(f: ActFrame) {
       const x = f.x;
       const aspect = f.camera.aspect;
-      const fit = clamp(aspect, 0.5, 1);
+      const fit = aspect < 0.85 ? 0.8 : 1;
+      const high = smoothstep(B.nova + 0.45, B.ascent + 0.45, x) * (1 - smoothstep(B.toolkit + 0.75, B.descent + 0.6, x));
+      limb.setGain(high);
+      if (high > 0.003) limb.update(f.camera.position, f.t);
       const ringGain = smoothstep(B.nova + 0.45, B.nova + 0.95, x) * (1 - smoothstep(B.crew + 0.0, B.crew + 0.5, x));
       rings.group.visible = ringGain > 0.004;
       if (rings.group.visible) rings.update(f, ringGain);
@@ -61,6 +69,7 @@ export function createSky(ctx: ActContext): Act {
       return out;
     },
     dispose() {
+      limb.dispose();
       rings.dispose();
       entries.forEach((e) => e.cluster.dispose());
     },

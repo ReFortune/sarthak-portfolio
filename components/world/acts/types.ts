@@ -30,6 +30,8 @@ export type Label = {
   y: number;
   visible: boolean;
   text?: string;
+  /** What it says on a narrow screen, if shorter. */
+  short?: string;
   /** Which side of the point the text sits. */
   side?: "left" | "right" | "top" | "bottom";
   alpha?: number;

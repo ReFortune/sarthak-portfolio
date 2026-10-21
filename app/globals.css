@@ -924,3 +924,11 @@ html[data-booted="1"] .preloader {
 
 /* the dossier: a drawer that carries one record of the archive */
 .dossier-scroll { scrollbar-width: thin; scrollbar-color: rgb(var(--bone) / 0.25) transparent; overscroll-behavior: contain; }
+
+@keyframes scroll-cue {
+  0% { transform: translateY(-100%); }
+  70%, 100% { transform: translateY(300%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="scroll-cue"] { animation: none !important; }
+}

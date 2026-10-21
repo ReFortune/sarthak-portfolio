@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { profile } from "@/data/profile";
 import { aboutBeats, aboutFacts } from "@/data/about";
 import { education } from "@/data/education";
@@ -124,12 +124,8 @@ function AboutRecord() {
 }
 
 function ExperienceRecord({ id }: { id?: string }) {
-  const first = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    first.current?.querySelector(`[data-rec="${id}"]`)?.scrollIntoView({ block: "start" });
-  }, [id]);
   return (
-    <div ref={first}>
+    <div>
       <Head eyebrow="Experience" title={<>Flight <span className="serif">log</span></>} sub="Two internships, in the order of the last four years." />
       <div className="mt-10">
         {[...experience].sort((a, b) => (a.id === id ? -1 : b.id === id ? 1 : 0)).map((e) => (
@@ -178,15 +174,11 @@ function ProjectRecord({ id }: { id?: string }) {
 }
 
 function LeadershipRecord({ id }: { id?: string }) {
-  const root = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    root.current?.querySelector(`[data-rec="${id}"]`)?.scrollIntoView({ block: "start" });
-  }, [id]);
   return (
-    <div ref={root}>
+    <div>
       <Head eyebrow="Leadership" title={<>Leading <span className="serif">teams</span></>} sub="Design teams, a national stage, and two years of student life." />
       <div className="mt-10">
-        {leadership.map((l) => (
+        {[...leadership].sort((a, b) => (a.id === id ? -1 : b.id === id ? 1 : 0)).map((l) => (
           <Section key={l.id} id={l.id} title={l.fullName ?? l.org}>
             <p className="label !normal-case !tracking-[0.03em]">{l.role} · {l.period}{l.fullName ? ` · ${l.org}` : ""}</p>
             <Metrics items={l.metrics} />

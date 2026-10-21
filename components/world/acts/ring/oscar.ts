@@ -7,9 +7,9 @@ import type { Exhibit, ExhibitContext } from "./common";
 /* OSCAR — an ocean, and a spectrometer that sweeps across it from orbit. Where its swath passes, the points light, and
    the ones over a bloom flare; a small bar chart beside the planet reads what it saw. */
 
-const R = 1.55;
-const CY = 3.35;
-const ORBIT = 2.7;
+const R = 1.45;
+const CY = 3.2;
+const ORBIT = 2.55;
 
 function bus(b: PointBuilder) {
   b.box([0, 0, 0], [0.28, 0.28, 0.4], TONE.bone, { tone: 1.0, dens: 3 });

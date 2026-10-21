@@ -37,7 +37,8 @@ export default function Threshold() {
       }
       name.style.fontSize = "100px";
       const w = name.getBoundingClientRect().width;
-      if (w > 0) name.style.fontSize = `${(100 * wrap.clientWidth * 0.972) / w}px`;
+      // as wide as its box allows, but never more than about a quarter of the screen's height
+      if (w > 0) name.style.fontSize = `${Math.min((100 * wrap.clientWidth * 0.972) / w, window.innerHeight * 0.27)}px`;
       chars.forEach((c, i) => {
         for (const [k, v] of [["--w", held[i][0]], ["--g", held[i][1]]] as const) {
           if (v) c.style.setProperty(k, v);
@@ -109,7 +110,7 @@ export default function Threshold() {
   }, [boot.done]);
 
   return (
-    <div ref={root} className="wrap relative flex h-full flex-col-reverse justify-between pb-[clamp(2.75rem,5vw,4.25rem)] pt-[clamp(6rem,13vh,8.5rem)]">
+    <div ref={root} className="wrap relative flex h-full flex-col-reverse justify-between pb-[clamp(2.75rem,5vw,4.25rem)] pt-[clamp(6rem,13vh,8.5rem)] [@media(max-height:700px)]:pt-[4.75rem]">
       {/* the name: first in the DOM for semantics, drawn at the bottom of the frame */}
       <div ref={nameWrap} className="[pointer-events:var(--pe,auto)] w-full overflow-hidden pb-[0.04em] pt-2">
         <h1 ref={nameRef} aria-label={profile.name} className="name h-display inline-block whitespace-nowrap text-bone" style={{ letterSpacing: "-0.04em", lineHeight: 0.86 }}>
@@ -126,7 +127,7 @@ export default function Threshold() {
         </h1>
       </div>
 
-      <div className="max-w-[44rem]">
+      <div className="max-w-[50rem]">
         <div className="hero-fade mb-6 space-y-2 sm:mb-8">
           <p className="label label-strong text-balance !text-[0.8rem] !leading-relaxed !text-bone sm:!text-[0.85rem]">
             <span className="mr-3 inline-block h-1.5 w-1.5 shrink-0 -translate-y-px rounded-full bg-laser [animation:blink_1.4s_infinite]" />
@@ -135,12 +136,12 @@ export default function Threshold() {
             <br className="sm:hidden" />
             {profile.org}
           </p>
-          <p className="label !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem]">
+          <p className="label !text-[0.75rem] !normal-case !tracking-[0.04em] sm:!text-[0.8rem] [@media(max-height:700px)]:hidden">
             {profile.program}, {profile.school} <span className="text-bone-mute">·</span> {profile.graduation}
           </p>
         </div>
 
-        <SplitReveal as="h2" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.1rem,5.5vw,5.9rem)] !leading-[0.92]">
+        <SplitReveal as="h2" split="lines" afterBoot stagger={0.12} className="h-display text-[clamp(2.1rem,min(5.5vw,9.5vh),5.9rem)] !leading-[0.92]">
           {profile.hook.lead}
           <br />
           <span className="serif text-[1.08em] normal-case tracking-[-0.02em]">
@@ -149,9 +150,9 @@ export default function Threshold() {
           </span>
         </SplitReveal>
 
-        <p className="hero-fade lede mt-6 max-w-[34rem] sm:mt-8">{profile.tagline}</p>
+        <p className="hero-fade lede mt-6 max-w-[34rem] sm:mt-8 [@media(max-height:700px)]:hidden">{profile.tagline}</p>
 
-        <div className="[pointer-events:var(--pe,auto)] hero-fade mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
+        <div className="[pointer-events:var(--pe,auto)] hero-fade mt-8 flex flex-wrap items-center gap-3 sm:mt-10 [@media(max-height:700px)]:mt-5">
           <Magnetic strength={0.22}>
             <a href="#profile" className="btn btn--solid">
               Begin <span aria-hidden="true" className="arrow">↓</span>
@@ -167,6 +168,14 @@ export default function Threshold() {
           </TLink>
         </div>
       </div>
+
+      {/* a cue that this is a scroll */}
+      <p aria-hidden="true" className="hero-fade label pointer-events-none absolute bottom-5 right-[var(--gutter)] hidden items-center gap-3 !text-[0.68rem] md:flex">
+        Scroll
+        <span className="relative block h-9 w-px overflow-hidden bg-bone/25">
+          <span className="absolute inset-x-0 top-0 h-3 bg-bone [animation:scroll-cue_2s_ease-in-out_infinite]" />
+        </span>
+      </p>
     </div>
   );
 }

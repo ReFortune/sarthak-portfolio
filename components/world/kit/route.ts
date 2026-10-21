@@ -172,7 +172,7 @@ export type RouteOverlay = {
  * Build the overlay from a finished route. `waypointS` are the arc lengths of the diamonds. `arrive` is how close
  * (m) the rover counts as having reached one. The ribbon thins out `show` metres ahead of the rover.
  */
-export function createRouteOverlay(data: RouteData, waypointS: number[], opts: { reduced: boolean; pxPerUnit: THREE.IUniform<number>; show?: number; arrive?: number; lineAlpha?: number }): RouteOverlay {
+export function createRouteOverlay(data: RouteData, waypointS: number[], opts: { reduced: boolean; pxPerUnit: THREE.IUniform<number>; show?: number; arrive?: number }): RouteOverlay {
   const n = data.n;
   const shared = {
     uRes: { value: new THREE.Vector2(1, 1) },

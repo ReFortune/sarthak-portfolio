@@ -42,7 +42,7 @@ export function createRings(opts: { layout: Layout; lowPower: boolean; pxPerUnit
         const a = (k / 12) * Math.PI * 2;
         b.line([Math.cos(a) * R * 0.62, Math.sin(a) * R * 0.62, 0], [Math.cos(a) * (R + 2.6), Math.sin(a) * (R + 2.6), 0], 0.6, TONE.bone, { tone: 0.9, param: 0.5 });
       }
-    }, { size: 0.55 });
+    }, { size: 0.95 });
     part.points.position.copy(v);
     part.points.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
     part.built.value = 1;

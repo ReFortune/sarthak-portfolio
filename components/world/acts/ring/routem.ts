@@ -7,9 +7,9 @@ import type { Exhibit, ExhibitContext } from "./common";
 /* ROUTE-M — Mars, turning, and the two satellites that look at the same patch of it from either side of it: a stereo
    pair. The planet is drawn as a mapped surface (a graticule and elevation), the pair's view as two cones. */
 
-const R = 1.85;
-const CY = 3.5;
-const ORBIT = 3.05;
+const R = 1.7;
+const CY = 3.3;
+const ORBIT = 2.85;
 
 const RAMP: RGB[] = [[0.42, 0.14, 0.08], [0.72, 0.27, 0.14], [0.95, 0.55, 0.26], [1.0, 0.82, 0.58], [0.96, 0.92, 0.86]];
 const ramp = (t: number): RGB => {

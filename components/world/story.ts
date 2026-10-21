@@ -41,7 +41,7 @@ export const BEAT_DEFS: BeatDef[] = [
   { id: "crew", section: "leadership", weight: 1.3, hold: 0.6 },
   { id: "transit", section: "research", weight: 1.3, hold: 0.6 },
   { id: "toolkit", section: "toolkit", weight: 1.3, hold: 0.6 },
-  { id: "descent", section: "timeline", weight: 1.3, hold: 0 },
+  { id: "descent", section: "toolkit", weight: 1.3, hold: 0 },
   { id: "path", section: "timeline", weight: 1.8, hold: 0.2 },
   { id: "resume", section: "resume", weight: 1.1, hold: 0.6 },
   { id: "gate", section: "contact", weight: 1.4, hold: 0.5 },
@@ -82,13 +82,26 @@ export function beatAt(u: number): { index: number; local: number } {
   return { index: lo, local: (x - b.u0) / (b.u1 - b.u0) };
 }
 
-/** Where each menu section sits on the scroll track, in svh: the DOM places an anchor (and the HUD's range) there. */
-export const sectionRanges: { id: SectionId; start: number; length: number }[] = sections.map((s) => {
-  const mine = beats.filter((b) => b.section === s.id);
-  const start = mine[0].u0 * TOTAL_SVH;
-  const end = mine[mine.length - 1].u1 * TOTAL_SVH;
-  return { id: s.id, start, length: end - start };
-});
+/**
+ * The distance scrolled over the whole story, in svh: the track is `TOTAL_SVH` tall, but its sticky stage fills the
+ * last 100 svh of it, so progress `u` runs over `TOTAL_SVH - 100`.
+ */
+export const SCROLL_SVH = TOTAL_SVH - 100;
+
+/**
+ * Where each menu section sits on the scroll track, in svh: the DOM places an anchor (and the HUD's range) there.
+ * A link lands a little way into the section's first beat (the pose is held and its words are up), not on its edge,
+ * where the camera is still arriving and the words have yet to appear.
+ */
+export const LAND = 0.2;
+export const sectionRanges: { id: SectionId; start: number; length: number }[] = (() => {
+  const starts = sections.map((s) => {
+    const first = beats.find((b) => b.section === s.id)!;
+    return (s.id === "top" ? first.u0 : first.u0 + (first.u1 - first.u0) * LAND) * SCROLL_SVH;
+  });
+  // each runs on to where the next begins (the last, to the end of the track), so some section is always the current one
+  return sections.map((s, i) => ({ id: s.id, start: starts[i], length: (i + 1 < starts.length ? starts[i + 1] : TOTAL_SVH) - starts[i] }));
+})();
 
 /** Scroll progress at the start of a beat (for jumping to it). */
 export const uOfBeat = (id: BeatId) => beats[beatIndex(id)].u0;

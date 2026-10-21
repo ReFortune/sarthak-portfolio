@@ -43,7 +43,7 @@ function ProjectBeat({ slot }: { slot: keyof typeof SLOT }) {
       title={
         <>
           <span className="block text-[clamp(2.4rem,6.4vw,5.6rem)] leading-[0.92]">{p.code}</span>
-          <span className="label mt-3 block !normal-case !tracking-[0.03em] !text-bone-dim">
+          <span className="label mt-3 hidden !normal-case !tracking-[0.03em] !text-bone-dim sm:block">
             {p.role} · {p.team} · {p.period}
           </span>
         </>
@@ -83,6 +83,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
 
   why: (
     <Copy
+      size="sm"
       eyebrow="About"
       title={
         <>
@@ -242,16 +243,16 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
   ),
 
   gate: (
-    <div className="wrap flex h-full flex-col justify-end pb-[clamp(4.5rem,9vh,6rem)] pt-[clamp(6rem,13vh,8.5rem)]">
-      <p className="label label-strong mb-5 flex items-center gap-3">
+    <div className="wrap flex h-full flex-col justify-end pb-[clamp(4.5rem,9vh,6rem)] pt-[clamp(5rem,13vh,8.5rem)]">
+      <p className="label label-strong mb-5 flex items-center gap-3 [@media(max-height:700px)]:mb-3">
         <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-laser [animation:blink_1.4s_infinite]" />
         Contact
       </p>
-      <h2 className="h-display max-w-[48rem] text-balance text-[clamp(2.1rem,5.2vw,5.2rem)] !leading-[0.94]">
+      <h2 className="h-display max-w-[48rem] text-balance text-[clamp(1.9rem,min(5.2vw,9vh),5.2rem)] !leading-[0.94]">
         Let’s build something that <span className="serif">leaves Earth.</span>
       </h2>
-      <p className="lede mt-6 max-w-[34rem]">{profile.seeking}</p>
-      <div className="[pointer-events:var(--pe,auto)] mt-8 max-w-full">
+      <p className="lede mt-6 max-w-[34rem] [@media(max-height:700px)]:mt-3">{profile.seeking}</p>
+      <div className="[pointer-events:var(--pe,auto)] mt-8 max-w-full [@media(max-height:700px)]:mt-4">
         <CopyEmail email={profile.email} />
       </div>
       <div className="[pointer-events:var(--pe,auto)] mt-2 flex flex-wrap items-center gap-3">
@@ -272,7 +273,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
           Archive →
         </TLink>
       </div>
-      <p className="label mt-8">
+      <p className="label mt-8 [@media(max-height:700px)]:hidden">
         © {new Date().getFullYear()} {profile.name} · Space engineering
       </p>
     </div>

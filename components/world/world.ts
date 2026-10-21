@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { corridorX, heightAt, raycast, hash2, type Hit } from "@/lib/terrain";
+import { heightAt, raycast, hash2, type Hit } from "@/lib/terrain";
 import { clamp, damp, lerp, smoothstep } from "@/lib/math";
 import { STAR_FRAG, STAR_VERT } from "@/components/hero/terrainScene";
 import { createTerrain } from "./kit/terrain";
@@ -11,7 +11,7 @@ import { createScan } from "./kit/scan";
 import { createPost } from "./kit/post";
 import { buildLayout, createRouteBuilder, type Layout } from "./layout";
 import { createCamState, createRig, type RigContext } from "./rig";
-import { beatAt, beatIndex, beats, type BeatId } from "./story";
+import { beatAt, beats, type BeatId } from "./story";
 import { createActs, type Act, type ActFrame, type Label, type Sortable } from "./acts";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -47,12 +47,28 @@ export type World = {
   readout(): { range: number; elev: number } | null;
   dispose(): void;
   /** Dev/testing: jump straight to a scroll position and report where things are. */
-  debug: { snap(u: number): void; info(): unknown };
+  debug: { snap(u: number): void; info(): unknown; stats(): { cpuMs: number; points: number } };
 };
 
 const B = Object.fromEntries(beats.map((b) => [b.id, b.index])) as Record<BeatId, number>;
 /** The fastest the rover is driven along the route (m/s): the ground can only be generated so fast. */
 const MAX_SPEED = 110;
+
+/** Where the route is across the track at world z (it only ever moves forward in z). */
+function routeXAt(route: Layout["route"], z: number) {
+  const p = route.pos, n = route.n;
+  if (z <= p[2]) return p[0];
+  if (z >= p[(n - 1) * 3 + 2]) return p[(n - 1) * 3];
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (p[mid * 3 + 2] <= z) lo = mid;
+    else hi = mid;
+  }
+  const z0 = p[lo * 3 + 2], z1 = p[hi * 3 + 2];
+  const t = z1 > z0 ? (z - z0) / (z1 - z0) : 0;
+  return p[lo * 3] + (p[hi * 3] - p[lo * 3]) * t;
+}
 
 export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): World {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
@@ -72,19 +88,35 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
   const embers = createEmbers({ count: opts.lowPower ? 700 : 1500, box: [70, 44, 70], pxPerUnit });
   scene.add(embers.points);
 
-  /* stars follow the camera, as a sky */
-  const starCount = opts.lowPower ? 800 : 1700;
+  /* stars follow the camera, as a sky: scattered ones, and a dense band of faint ones across it */
+  const scatter = opts.lowPower ? 800 : 1700;
+  const bandN = opts.lowPower ? 900 : 2800;
+  const starCount = scatter + bandN;
   const starGeo = new THREE.BufferGeometry();
   {
     const p = new Float32Array(starCount * 3);
     const sd = new Float32Array(starCount);
-    for (let i = 0; i < starCount; i++) {
+    for (let i = 0; i < scatter; i++) {
       const th = hash2(i, 1, 77) * Math.PI * 2;
       const el = Math.asin(-0.12 + hash2(i, 2, 77) * 1.1);
       p[i * 3] = Math.cos(th) * Math.cos(el) * 700;
       p[i * 3 + 1] = Math.sin(el) * 700;
       p[i * 3 + 2] = Math.sin(th) * Math.cos(el) * 700;
       sd[i] = hash2(i, 3, 77);
+    }
+    // the band: a great circle tilted across the sky, thick in the middle and thinning out, with clumps along it
+    const tilt = 0.75, ct = Math.cos(tilt), st2 = Math.sin(tilt);
+    for (let k = 0; k < bandN; k++) {
+      const i = scatter + k;
+      const lon = hash2(k, 1, 91) * Math.PI * 2;
+      const clump = 0.5 + 0.5 * Math.sin(lon * 3 + 1.2) * Math.sin(lon * 5.3);
+      const lat = (hash2(k, 2, 91) + hash2(k, 3, 91) + hash2(k, 4, 91) - 1.5) * 0.2 * (0.55 + 0.7 * clump);
+      const x0 = Math.cos(lon) * Math.cos(lat), y0 = Math.sin(lat), z0 = Math.sin(lon) * Math.cos(lat);
+      const x1 = x0, y1 = y0 * ct - z0 * st2, z1 = y0 * st2 + z0 * ct;
+      p[i * 3] = x1 * 700;
+      p[i * 3 + 1] = y1 * 700;
+      p[i * 3 + 2] = z1 * 700;
+      sd[i] = 0.05 + 0.4 * hash2(k, 5, 91) * (0.4 + clump);
     }
     starGeo.setAttribute("position", new THREE.BufferAttribute(p, 3));
     starGeo.setAttribute("aSeed", new THREE.BufferAttribute(sd, 1));
@@ -135,6 +167,9 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     lost: false,
     hover: null as string | null,
     readout: null as { range: number; elev: number } | null,
+    cpuMs: 0,
+    lastBeat: -1,
+    boost: 0,
     uPrev: 0,
     introWanted: false,
   };
@@ -150,6 +185,8 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
 
   function build(l: Layout) {
     layout = l;
+    // the ground is generated around the route (which wanders a little either side of the corridor)
+    terrain.setCenter((z) => routeXAt(l.route, z));
     rig = createRig(l);
     const sRing = l.sRing;
     overlay = createRouteOverlay(l.route, [156, 204, 256, sRing].filter((s) => s < l.length), { reduced: opts.reduced, pxPerUnit, show: 84, arrive: 4 });
@@ -374,7 +411,13 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     /* the ground */
     const groundOn = 1 - 0.8 * smoothstep(B.nova + 0.55, B.ascent + 0.85, x) + 0.8 * smoothstep(B.toolkit + 0.7, B.descent + 0.9, x);
     terrain.setGain(clamp(groundOn, 0, 1) * smoothstep(0, 0.2, st.intro) * (st.intro > 0 ? 1 : 0));
-    const budget = st.warp >= 0 ? 36 : st.ready ? 14 : 20;
+    // reduced motion cuts from pose to pose: make the ground around each new one at once
+    if (opts.reduced && bi !== st.lastBeat) {
+      st.lastBeat = bi;
+      st.boost = 10;
+    }
+    const budget = st.boost > 0 ? 90 : st.warp >= 0 ? 36 : st.ready ? 14 : 20;
+    if (st.boost > 0) st.boost--;
     const filled = terrain.update(camera.position.z, budget);
     terrain.tick(dt);
 
@@ -471,7 +514,9 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     const raw = (now - last) / 1000 || 0.016;
     const dt = Math.min(0.05, raw);
     last = now;
+    const t0 = performance.now();
     frame(dt);
+    st.cpuMs += (performance.now() - t0 - st.cpuMs) * 0.05;
     if (!st.ready || st.intro < 1 || raw > 0.25) return;
     if (mon.skip > 0) { mon.skip--; return; }
     mon.acc += raw;
@@ -577,6 +622,9 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
         st.warp = -1;
         post.uniforms.uFade.value = 1;
       },
+      stats() {
+        return { cpuMs: st.cpuMs, points: renderer.info.render.points };
+      },
       info() {
         if (!layout) return { ready: false };
         return {
@@ -588,6 +636,3 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     },
   };
 }
-
-void corridorX;
-void beatIndex;

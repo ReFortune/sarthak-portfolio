@@ -83,7 +83,7 @@ export function createRig(layout: Layout) {
     } else {
       // look at the route a little way on (not along the tangent), so a bend in the route turns the view with it
       routeAt(layout.route, (s ?? 0) + (p.lookAhead ?? 30), ahead);
-      out.look.set(ahead.x, ahead.y + (p.lookY ?? 3), ahead.z);
+      out.look.set(ahead.x, ahead.y + (ctx.aspect < 0.85 && p.lookYTall !== undefined ? p.lookYTall : (p.lookY ?? 3)), ahead.z);
     }
   }
 
@@ -92,7 +92,7 @@ export function createRig(layout: Layout) {
     const tv = Math.tan((out.fov * Math.PI) / 360);
     const portrait = ctx.aspect < 0.85;
     const fx = portrait ? 0 : side === "left" ? 0.38 : -0.38;
-    const fy = portrait ? 0.32 : 0.04;
+    const fy = portrait ? 0.4 : 0.04;
     dirv.subVectors(out.look, out.pos);
     const len = dirv.length();
     dirv.normalize();

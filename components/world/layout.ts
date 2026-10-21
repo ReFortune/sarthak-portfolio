@@ -149,7 +149,7 @@ export type Slot = {
 export type YearGate = { year: number; s: number; items: string[] };
 
 export type Pose =
-  | { type: "rel"; back: number; up: number; side?: number; ry?: number; lookAhead?: number; lookY?: number; fov?: number }
+  | { type: "rel"; back: number; up: number; side?: number; ry?: number; lookAhead?: number; lookY?: number; /** `lookY` on a tall screen. */ lookYTall?: number; fov?: number }
   | { type: "world"; pos: THREE.Vector3; look: THREE.Vector3; fov?: number; orbit?: THREE.Vector3; room?: "left" | "right" };
 
 export type Key = {
@@ -234,7 +234,7 @@ export function buildLayout(route: Route): Layout {
   const center = entrance.pos.clone().addScaledVector(F, RING_R);
   center.y = heightAt(center.x, center.z);
   const slotAngles: Slot["id"][] = ["sparrow", "mpt", "chiron", "routem", "oscar", "nova"];
-  const CAM_R = 21;
+  const CAM_R = 22;
   const slots: Slot[] = slotAngles.map((id, i) => {
     const phi = (270 + i * 60) * DEG;
     const dirv = new THREE.Vector3().addScaledVector(R, Math.cos(phi)).addScaledVector(F, Math.sin(phi));
@@ -275,7 +275,9 @@ export function buildLayout(route: Route): Layout {
   const sky = { center: new THREE.Vector3(cor.pos.x, cor.pos.y + 300, cor.pos.z) };
 
   /* camera poses, beat by beat */
-  const ringLook = (slot: Slot) => slot.pos.clone().add(new THREE.Vector3(0, 2.2, 0));
+  // what the camera looks at on each exhibit: a point partway up it
+  const LOOK_Y: Record<Slot["id"], number> = { sparrow: 2.0, mpt: 1.5, chiron: 1.2, routem: 3.0, oscar: 3.0, nova: 3.0 };
+  const ringLook = (slot: Slot) => slot.pos.clone().add(new THREE.Vector3(0, LOOK_Y[slot.id], 0));
   const slotOf = (id: Slot["id"]) => slots.find((s) => s.id === id)!;
   const worldKey = (id: Slot["id"]): Key => {
     const sl = slotOf(id);
@@ -315,8 +317,8 @@ export function buildLayout(route: Route): Layout {
     // back down, into the corridor
     descent: { pose: { type: "world", pos: new THREE.Vector3(cor.pos.x, cor.pos.y + 110, cor.pos.z).addScaledVector(F, -70), look: cor.pos.clone().addScaledVector(F, 40).add(new THREE.Vector3(0, 4, 0)), fov: 44 } },
     path: { s0: sCorridor - 26, s1: sCorridor + years.length * GAP - 6, entity: "camera", pose: { type: "rel", back: 0, up: 5.2, lookAhead: 34, lookY: 3.4, fov: 44 } },
-    resume: { s0: sCorridor + years.length * GAP - 6, s1: sFinalClamped - 34, entity: "camera", pose: { type: "rel", back: 0, up: 4.8, lookAhead: 34, lookY: 4.4, fov: 44 } },
-    gate: { s0: sFinalClamped - 34, s1: sFinalClamped + 16, entity: "camera", pose: { type: "rel", back: 0, up: 4.6, lookAhead: 34, lookY: 6.8, fov: 44 } },
+    resume: { s0: sCorridor + years.length * GAP - 6, s1: sFinalClamped - 34, entity: "camera", pose: { type: "rel", back: 0, up: 4.8, lookAhead: 34, lookY: 4.4, lookYTall: 14, fov: 44 } },
+    gate: { s0: sFinalClamped - 34, s1: sFinalClamped + 16, entity: "camera", pose: { type: "rel", back: 0, up: 4.6, lookAhead: 34, lookY: 6.8, lookYTall: 17, fov: 44 } },
   };
   return {
     route,

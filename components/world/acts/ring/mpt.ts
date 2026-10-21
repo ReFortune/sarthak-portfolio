@@ -12,6 +12,7 @@ const SIZE = 5;
 const TOP = 1.3;
 const SAFE = 0.26;
 const NOGO = 0.5;
+const TILT_ANGLE = 0.3;
 
 export function createMpt(ctx: ExhibitContext): Exhibit {
   const S = createSculpture({ height: 3, lowPower: ctx.lowPower, pxPerUnit: ctx.pxPerUnit, size: 0.05 });
@@ -96,7 +97,7 @@ export function createMpt(ctx: ExhibitContext): Exhibit {
   }
 
   /* the table */
-  S.part(1, (b) => {
+  const tile = S.part(1, (b) => {
     for (let j = 0; j < N; j++) {
       for (let i = 0; i < N; i++) {
         const u = -SIZE / 2 + (i + 0.15 + 0.7 * b.rnd()) * cell, v = -SIZE / 2 + (j + 0.15 + 0.7 * b.rnd()) * cell;
@@ -110,7 +111,6 @@ export function createMpt(ctx: ExhibitContext): Exhibit {
       }
     }
     b.frame([0, TOP - 0.02, 0], SIZE + 0.12, SIZE + 0.12, "y", 0.06, TONE.bone, { tone: 0.9, param: 0.1 });
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.line([sx * (SIZE / 2 - 0.12), 0.02, sz * (SIZE / 2 - 0.12)], [sx * (SIZE / 2 - 0.12), TOP - 0.04, sz * (SIZE / 2 - 0.12)], 0.09, TONE.dim, { tone: 0.7 });
     // start and goal pins
     const sx0 = -SIZE / 2 + u0 * cell, sz0 = -SIZE / 2 + v0 * cell, sx1 = -SIZE / 2 + u1 * cell, sz1 = -SIZE / 2 + v1 * cell;
     const y0 = hs[v0 * W + u0] + TOP, y1 = hs[v1 * W + u1] + TOP;
@@ -152,15 +152,35 @@ export function createMpt(ctx: ExhibitContext): Exhibit {
     }
   }, { size: 0.045 });
 
-  S.hull(new THREE.BoxGeometry(SIZE + 0.2, 0.14, SIZE + 0.2), 0, TOP - 0.09, 0);
+  // the table tilts toward whoever is looking, on a pole
+  const table = new THREE.Group();
+  table.position.set(0, TOP, 0);
+  table.rotation.x = TILT_ANGLE;
+  const inner = new THREE.Group();
+  inner.position.set(0, -TOP, 0);
+  S.group.add(table);
+  table.add(inner);
+  inner.add(tile.points, search.points, path.points);
+  S.hull(new THREE.BoxGeometry(SIZE + 0.2, 0.14, SIZE + 0.2), 0, TOP - 0.09, 0, undefined, inner);
+  S.part(5, (b) => {
+    b.line([0, 0.02, 0], [0, TOP - 0.1, 0], 0.06, TONE.dim, { tone: 0.8 });
+    b.ring([0, 0.02, 0], 0.8, "y", 50, TONE.dim, { tone: 0.9 });
+    b.ring([0, 0.02, 0], 1.3, "y", 70, TONE.bone, { tone: 0.5, dash: 18 });
+  });
 
+  // where a point of the flat table ends up once it is tilted (for the callouts)
+  const TILT = TILT_ANGLE;
+  const tilted = (p: V3): [number, number, number] => {
+    const dy = p[1] - TOP;
+    return [p[0], TOP + dy * Math.cos(TILT) - p[2] * Math.sin(TILT), dy * Math.sin(TILT) + p[2] * Math.cos(TILT)];
+  };
   let play = 0, was = 0;
   return {
     S,
     pick: { center: [0, TOP + 0.4, 0], radius: 3.3 },
     callouts: [
-      { id: "mpt-safe", text: "SAFE", at: [-SIZE / 2 + 0.2, TOP + 0.55, SIZE / 2 - 0.5], side: "left" },
-      { id: "mpt-goal", text: "GOAL", at: [-SIZE / 2 + u1 * cell, hs[v1 * W + u1] + TOP + 1.2, -SIZE / 2 + v1 * cell], side: "right" },
+      { id: "mpt-safe", text: "START", at: tilted([-SIZE / 2 + u0 * cell, hs[v0 * W + u0] + TOP + 1.0, -SIZE / 2 + v0 * cell]), side: "left" },
+      { id: "mpt-goal", text: "GOAL", at: tilted([-SIZE / 2 + u1 * cell, hs[v1 * W + u1] + TOP + 1.2, -SIZE / 2 + v1 * cell]), side: "right" },
     ],
     tick(_t, dt, active) {
       if (active > 0.55 && was <= 0.55) play = 0;
