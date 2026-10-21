@@ -39,6 +39,7 @@ export function createRouteBuilder(opts: { lowPower: boolean }) {
   let x = corridorX(Z_START), z = Z_START, windowStart = Z_START;
   let primed = false, firstMs = 0, firstLen = 0, firstSlope = 0;
   let done = false;
+  let fails = 0;
   let result: Route | null = null;
 
   function finish() {
@@ -75,6 +76,17 @@ export function createRouteBuilder(opts: { lowPower: boolean }) {
     };
   }
 
+  /** The planner could not make progress: carry on straight along the corridor, so the story always has a route to follow. */
+  function giveUp() {
+    const zEnd = Z_START + Z_TOTAL;
+    for (let zz = P.length ? z + 0.5 : Z_START; zz <= zEnd; zz += 0.5) {
+      const cx = corridorX(zz);
+      P.push(cx, heightAt(cx, zz), zz);
+    }
+    finish();
+    done = true;
+  }
+
   return {
     get done() {
       return done;
@@ -91,6 +103,10 @@ export function createRouteBuilder(opts: { lowPower: boolean }) {
       }
       if (!planner.plan(x, z, plan) || plan.n < 3) {
         primed = false;
+        if (++fails > 40) {
+          giveUp();
+          return true;
+        }
         return false;
       }
       if (windowStart === Z_START && firstLen === 0) {
@@ -101,6 +117,7 @@ export function createRouteBuilder(opts: { lowPower: boolean }) {
       const last = windowStart + KEEP >= Z_START + Z_TOTAL;
       const zKeep = last ? Z_START + Z_TOTAL : windowStart + KEEP;
       let lastK = 0;
+      const before = P.length;
       for (let k = P.length === 0 ? 0 : 1; k < plan.n; k++) {
         const pz = plan.pos[k * 3 + 2];
         if (pz > zKeep && !last) break;
@@ -108,6 +125,16 @@ export function createRouteBuilder(opts: { lowPower: boolean }) {
         lastK = k;
         if (pz >= Z_START + Z_TOTAL) break;
       }
+      if (P.length === before) {
+        // nothing of this window lay in the stretch it was meant to cover
+        primed = false;
+        if (++fails > 6) {
+          giveUp();
+          return true;
+        }
+        return false;
+      }
+      fails = 0;
       // the steep ground this window outlines, within its own stretch
       for (let q = 0; q < plan.segN; q++) {
         const o = q * 7;
@@ -317,8 +344,8 @@ export function buildLayout(route: Route): Layout {
     // back down, into the corridor
     descent: { pose: { type: "world", pos: new THREE.Vector3(cor.pos.x, cor.pos.y + 110, cor.pos.z).addScaledVector(F, -70), look: cor.pos.clone().addScaledVector(F, 40).add(new THREE.Vector3(0, 4, 0)), fov: 44 } },
     path: { s0: sCorridor - 26, s1: sCorridor + years.length * GAP - 6, entity: "camera", pose: { type: "rel", back: 0, up: 5.2, lookAhead: 34, lookY: 3.4, fov: 44 } },
-    resume: { s0: sCorridor + years.length * GAP - 6, s1: sFinalClamped - 34, entity: "camera", pose: { type: "rel", back: 0, up: 4.8, lookAhead: 34, lookY: 4.4, lookYTall: 14, fov: 44 } },
-    gate: { s0: sFinalClamped - 34, s1: sFinalClamped + 16, entity: "camera", pose: { type: "rel", back: 0, up: 4.6, lookAhead: 34, lookY: 6.8, lookYTall: 17, fov: 44 } },
+    resume: { s0: sCorridor + years.length * GAP - 6, s1: sFinalClamped - 34, entity: "camera", pose: { type: "rel", back: 0, up: 4.8, lookAhead: 34, lookY: 4.4, lookYTall: 8, fov: 44 } },
+    gate: { s0: sFinalClamped - 34, s1: sFinalClamped + 16, entity: "camera", pose: { type: "rel", back: 0, up: 4.6, lookAhead: 34, lookY: 6.8, lookYTall: 9, fov: 44 } },
   };
   return {
     route,

@@ -87,7 +87,7 @@ export function createFinale(ctx: ActContext): Act {
   /* the sun behind the last gate */
   const fg = layout.finale.finalGate;
   const SUN_D = 430, SUN_R = 58;
-  const SUN_YAW = 0.29; // radians to the right of where the camera looks
+  const SUN_YAW = 0.29; // radians to the right of where the camera looks (dead ahead on a tall screen, where the words are below)
   const dawn = createDawn(SUN_R);
   group.add(dawn.group);
   const sunAt = new THREE.Vector3(), look = new THREE.Vector3();
@@ -107,12 +107,14 @@ export function createFinale(ctx: ActContext): Act {
       // the sun stays out ahead and a little to the right of wherever the camera is looking (so the words, at the left, are never over it)
       f.camera.getWorldDirection(look);
       const hl = Math.hypot(look.x, look.z) || 1;
-      const dx = look.x / hl, dz = look.z / hl, c = Math.cos(SUN_YAW), sn = Math.sin(SUN_YAW);
+      const tall = f.camera.aspect < 0.85;
+      const yaw = tall ? 0.04 : SUN_YAW;
+      const dx = look.x / hl, dz = look.z / hl, c = Math.cos(yaw), sn = Math.sin(yaw);
       sunAt.set(f.camera.position.x + (dx * c - dz * sn) * SUN_D, fg.pos.y + 9, f.camera.position.z + (dz * c + dx * sn) * SUN_D);
       dawn.group.position.copy(sunAt);
       dawn.group.rotation.y = Math.atan2(f.camera.position.x - sunAt.x, f.camera.position.z - sunAt.z);
       dawn.setGain(on * smoothstep(B.path - 0.3, B.resume + 0.3, x));
-      dawn.setRise(smoothstep(B.resume + 0.1, B.gate + 0.5, x));
+      dawn.setRise(smoothstep(B.resume + 0.1, B.gate + 0.5, x), tall ? 1.8 : 0);
       dawn.update(f.t);
       camS = f.cam.sRef ?? camS;
       // the line and the rails are drawn out ahead of the camera

@@ -107,6 +107,7 @@ export function createRing(ctx: ActContext): Act {
       group.visible = near > 0.004;
       if (!group.visible) return;
       const t = f.t, dt = f.dt;
+      if (!f.pointer.active) hovered = null; // `hover()` is not asked while the pointer is away
       let best = -1, bestA = 0.55;
       placed.forEach((p, i) => {
         const centre = B[p.beat] + 0.4;

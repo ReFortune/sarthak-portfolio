@@ -142,7 +142,7 @@ export function createTransit(ctx: ClusterContext): Cluster {
         const s = project(v);
         out.push({ id, text, x: s.x, y: s.y, visible: s.visible, side, alpha });
       };
-      push("transit-star", "HAT-P-18 · K DWARF · 530 LY", [-RS * 0.9, RS * 0.95, 0], "left");
+      push("transit-star", `HAT-P-18 · K DWARF · ${research.paper.distanceLy} LY`, [-RS * 0.9, RS * 0.95, 0], "left");
       push("transit-flux", "FLUX", [-BOARD_W / 2 - 1, BOARD_Y + BOARD_H / 2 + 1, 0], "left");
       push("transit-depth", `−${research.paper.depthPercent} %`, [fx((CONTACT.ingressEnd + CONTACT.egressStart) / 2), fy(0.9645), 0], "right");
       push("transit-frames", `${research.numbers.frames} FRAMES · ${research.numbers.exposureSeconds} S EXPOSURES`, [BOARD_W / 2, BOARD_Y - BOARD_H / 2 - 1, 0], "right");

@@ -69,15 +69,78 @@ export type Gate = {
   dispose(): void;
 };
 
-export function createGate(id: string, kind: GateKind, opts: { lowPower: boolean; pxPerUnit: THREE.IUniform<number> }): Gate {
+/** The parts of a gate that every gate of its kind shares: built once, drawn many times. */
+type Template = {
+  W: number;
+  H: number;
+  merged: THREE.BufferGeometry;
+  edgeGeo: THREE.BufferGeometry;
+  geo: THREE.BufferGeometry;
+  refs: number;
+};
+const templates = new Map<string, Template>();
+
+function template(kind: GateKind, lowPower: boolean): Template {
+  const key = `${kind}:${lowPower}`;
+  const found = templates.get(key);
+  if (found) {
+    found.refs++;
+    return found;
+  }
   const W = kind === "major" ? 11 : 5.8;
   const H = kind === "major" ? 13.5 : 7.4;
+  const merged = mergeGeometries(parts(W, H).map((g) => (g.index ? g.toNonIndexed() : g)), false)!;
+  const edgeGeo = new THREE.EdgesGeometry(merged, 28);
+
+  // surface points
+  let area = 0;
+  {
+    const pos = merged.attributes.position;
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i += 3) {
+      a.fromBufferAttribute(pos, i); b.fromBufferAttribute(pos, i + 1); c.fromBufferAttribute(pos, i + 2);
+      area += b.sub(a).cross(c.sub(a)).length() / 2;
+    }
+  }
+  const density = (kind === "major" ? 44 : 58) * (lowPower ? 0.55 : 1);
+  const N = Math.min(16000, Math.max(800, Math.round(area * density)));
+  const sampler = new MeshSurfaceSampler(new THREE.Mesh(merged)).build();
+  const P = new Float32Array(N * 3), C = new Float32Array(N * 3), Z = new Float32Array(N * 3);
+  const S = new Float32Array(N), Y = new Float32Array(N), HOT = new Float32Array(N), WH = new Float32Array(N);
+  const p = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    sampler.sample(p, n);
+    P[i * 3] = p.x; P[i * 3 + 1] = p.y; P[i * 3 + 2] = p.z;
+    const y = p.y / H;
+    const lit = Math.max(0, n.x * 0.5 + n.y * 0.35 + n.z * 0.6);
+    const tone = 0.55 + 0.7 * lit;
+    // vermilion, paler toward the top; a few bone-white highlights
+    const pale = i % 9 === 0 ? 0.55 : 0.0;
+    C[i * 3] = (1.0 - pale * 0.1) * tone;
+    C[i * 3 + 1] = (0.36 + pale * 0.55 + y * 0.12) * tone;
+    C[i * 3 + 2] = (0.2 + pale * 0.6) * tone;
+    S[i] = hash2(i, 7, 9001);
+    Y[i] = Math.min(1, Math.max(0, y));
+    HOT[i] = y > 0.9 ? 0.18 : 0;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(P, 3));
+  geo.setAttribute("aColor", new THREE.BufferAttribute(C, 3));
+  geo.setAttribute("aCenter", new THREE.BufferAttribute(Z, 3));
+  geo.setAttribute("aSeed", new THREE.BufferAttribute(S, 1));
+  geo.setAttribute("aY", new THREE.BufferAttribute(Y, 1));
+  geo.setAttribute("aHot", new THREE.BufferAttribute(HOT, 1));
+  geo.setAttribute("aWheel", new THREE.BufferAttribute(WH, 1));
+
+  const t: Template = { W, H, merged, edgeGeo, geo, refs: 1 };
+  templates.set(key, t);
+  return t;
+}
+
+export function createGate(id: string, kind: GateKind, opts: { lowPower: boolean; pxPerUnit: THREE.IUniform<number> }): Gate {
+  const { W, H, merged, edgeGeo, geo } = template(kind, opts.lowPower);
   const group = new THREE.Group();
   let gain = 0, body = 1;
-
-  const merged = mergeGeometries(parts(W, H).map((g) => (g.index ? g.toNonIndexed() : g)), false)!;
-  // keep only position + normal so every part merges cleanly
-  const mesh = new THREE.Mesh(merged);
 
   // dark body
   const hullMat = new THREE.MeshBasicMaterial({ color: 0x06070b, transparent: true, opacity: 0.0, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
@@ -87,7 +150,6 @@ export function createGate(id: string, kind: GateKind, opts: { lowPower: boolean
   group.add(hull);
 
   // edges
-  const edgeGeo = new THREE.EdgesGeometry(merged, 28);
   const edgeU = { uGain: { value: 0 }, uBuilt: { value: 0 }, uH: { value: H }, uTime: { value: 0 } };
   const edgeMat = new THREE.ShaderMaterial({
     uniforms: edgeU,
@@ -115,45 +177,6 @@ export function createGate(id: string, kind: GateKind, opts: { lowPower: boolean
   edges.frustumCulled = false;
   group.add(edges);
 
-  // surface points
-  let area = 0;
-  {
-    const pos = merged.attributes.position;
-    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
-    for (let i = 0; i < pos.count; i += 3) {
-      a.fromBufferAttribute(pos, i); b.fromBufferAttribute(pos, i + 1); c.fromBufferAttribute(pos, i + 2);
-      area += b.sub(a).cross(c.sub(a)).length() / 2;
-    }
-  }
-  const density = (kind === "major" ? 44 : 58) * (opts.lowPower ? 0.55 : 1);
-  const N = Math.min(16000, Math.max(800, Math.round(area * density)));
-  const sampler = new MeshSurfaceSampler(mesh).build();
-  const P = new Float32Array(N * 3), C = new Float32Array(N * 3), Z = new Float32Array(N * 3);
-  const S = new Float32Array(N), Y = new Float32Array(N), HOT = new Float32Array(N), WH = new Float32Array(N);
-  const p = new THREE.Vector3(), n = new THREE.Vector3();
-  for (let i = 0; i < N; i++) {
-    sampler.sample(p, n);
-    P[i * 3] = p.x; P[i * 3 + 1] = p.y; P[i * 3 + 2] = p.z;
-    const y = p.y / H;
-    const lit = Math.max(0, n.x * 0.5 + n.y * 0.35 + n.z * 0.6);
-    const tone = 0.55 + 0.7 * lit;
-    // vermilion, paler toward the top; a few bone-white highlights
-    const pale = i % 9 === 0 ? 0.55 : 0.0;
-    C[i * 3] = (1.0 - pale * 0.1) * tone;
-    C[i * 3 + 1] = (0.36 + pale * 0.55 + y * 0.12) * tone;
-    C[i * 3 + 2] = (0.2 + pale * 0.6) * tone;
-    S[i] = hash2(i, 7, 9001);
-    Y[i] = Math.min(1, Math.max(0, y));
-    HOT[i] = y > 0.9 ? 0.18 : 0;
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(P, 3));
-  geo.setAttribute("aColor", new THREE.BufferAttribute(C, 3));
-  geo.setAttribute("aCenter", new THREE.BufferAttribute(Z, 3));
-  geo.setAttribute("aSeed", new THREE.BufferAttribute(S, 1));
-  geo.setAttribute("aY", new THREE.BufferAttribute(Y, 1));
-  geo.setAttribute("aHot", new THREE.BufferAttribute(HOT, 1));
-  geo.setAttribute("aWheel", new THREE.BufferAttribute(WH, 1));
   const u = { uPxPerUnit: opts.pxPerUnit, uSize: { value: kind === "major" ? 0.085 : 0.06 }, uGain: { value: 0 }, uBuilt: { value: 0 }, uSpin: { value: 0 }, uTime: { value: 0 } };
   const mat = new THREE.ShaderMaterial({ vertexShader: ROVER_VERT, fragmentShader: SOFT_FRAG, uniforms: u, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending });
   const pts = new THREE.Points(geo, mat);
@@ -189,12 +212,18 @@ export function createGate(id: string, kind: GateKind, opts: { lowPower: boolean
       edgeU.uTime.value = t;
     },
     dispose() {
-      merged.dispose();
       hullMat.dispose();
-      edgeGeo.dispose();
       edgeMat.dispose();
-      geo.dispose();
       mat.dispose();
+      // the shared geometry goes with the last gate that uses it
+      const key = `${kind}:${opts.lowPower}`;
+      const t = templates.get(key);
+      if (t && --t.refs <= 0) {
+        t.merged.dispose();
+        t.edgeGeo.dispose();
+        t.geo.dispose();
+        templates.delete(key);
+      }
     },
   };
 }

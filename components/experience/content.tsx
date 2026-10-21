@@ -175,9 +175,9 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
           A planet, <span className="serif">from starlight</span>
         </>
       }
-      body="Nothing but photons from a star about 530 light-years away: 706 CCD frames, one six-hour transit, and a pipeline that turns them into the size of a world."
+      body={`Nothing but photons from a star about ${research.paper.distanceLy} light-years away: ${research.numbers.frames} CCD frames, one ${research.numbers.transitHours}-hour transit, and a pipeline that turns them into the size of a world.`}
       figs={[
-        { value: "69,112 km", label: "radius, within 0.6% of published" },
+        { value: `${research.numbers.radiusKm.toLocaleString("en-CA")} km`, label: `radius, within ${research.numbers.percentOff}% of published` },
         { value: String(research.numbers.frames), label: "CCD frames reduced" },
       ]}
       actions={<DossierButton to={{ kind: "research" }}>The report</DossierButton>}
@@ -251,7 +251,7 @@ export const contents: Partial<Record<BeatId, ReactNode>> = {
       <h2 className="h-display max-w-[48rem] text-balance text-[clamp(1.9rem,min(5.2vw,9vh),5.2rem)] !leading-[0.94]">
         Let’s build something that <span className="serif">leaves Earth.</span>
       </h2>
-      <p className="lede mt-6 max-w-[34rem] [@media(max-height:700px)]:mt-3">{profile.seeking}</p>
+      <p className="lede mt-6 max-w-[34rem] [@media(max-aspect-ratio:17/20)]:sr-only [@media(max-height:700px)]:mt-3">{profile.seeking}</p>
       <div className="[pointer-events:var(--pe,auto)] mt-8 max-w-full [@media(max-height:700px)]:mt-4">
         <CopyEmail email={profile.email} />
       </div>

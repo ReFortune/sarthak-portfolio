@@ -6,7 +6,8 @@ import * as THREE from "three";
      · chromatic aberration that grows with the scroll speed and at a gate
      · "tech displacement": bands of the image tear sideways during a gate pulse
      · a warm grade for dawn, and a vignette
-   Off on low-power devices (the scene is drawn straight to the canvas).
+   On low-power devices the scene is drawn straight to the canvas, and only the two things the story depends on are laid
+   over it: the fade that hides a cut, and the warm tint of dawn.
    ───────────────────────────────────────────────────────────────────────── */
 
 const VERT = /* glsl */ `
@@ -82,6 +83,20 @@ const COMP_FRAG = /* glsl */ `
   }
 `;
 
+const VEIL_FRAG = /* glsl */ `
+  uniform float uFade;
+  void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0 - uFade); }
+`;
+
+const TINT_FRAG = /* glsl */ `
+  uniform float uWarm;
+  varying vec2 vUv;
+  void main() {
+    float v = 1.0 - smoothstep(0.1, 0.9, length(vUv - 0.5) * 1.4);
+    gl_FragColor = vec4(vec3(1.0, 0.42, 0.18) * uWarm * (0.035 + 0.05 * v), 1.0);
+  }
+`;
+
 export type Post = {
   enabled: boolean;
   /** Per-frame values (all 0 = a plain image). */
@@ -114,14 +129,40 @@ export function createPost(renderer: THREE.WebGLRenderer, opts: { lowPower: bool
   };
   if (opts.lowPower) {
     uniforms.uBloom.value = 0;
+    const tri = new THREE.BufferGeometry();
+    tri.setAttribute("position", new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
+    const ocam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const base = { vertexShader: VERT, depthTest: false, depthWrite: false, transparent: true } as const;
+    const veil = new THREE.ShaderMaterial({ ...base, fragmentShader: VEIL_FRAG, uniforms: { uFade: uniforms.uFade } });
+    const tint = new THREE.ShaderMaterial({ ...base, fragmentShader: TINT_FRAG, uniforms: { uWarm: uniforms.uWarm }, blending: THREE.AdditiveBlending });
+    const quad = new THREE.Mesh(tri, veil);
+    quad.frustumCulled = false;
+    const overlay = new THREE.Scene();
+    overlay.add(quad);
     return {
       enabled: false,
       uniforms,
       resize() {},
       render(draw) {
         draw();
+        const warm = uniforms.uWarm.value > 0.004, fade = uniforms.uFade.value < 0.996;
+        if (!warm && !fade) return;
+        renderer.autoClear = false;
+        if (warm) {
+          quad.material = tint;
+          renderer.render(overlay, ocam);
+        }
+        if (fade) {
+          quad.material = veil;
+          renderer.render(overlay, ocam);
+        }
+        renderer.autoClear = true;
       },
-      dispose() {},
+      dispose() {
+        tri.dispose();
+        veil.dispose();
+        tint.dispose();
+      },
     };
   }
 

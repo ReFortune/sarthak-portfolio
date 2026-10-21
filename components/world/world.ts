@@ -311,6 +311,8 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
           terrain.rescan(cam.pos, 1.8);
         }
         post.uniforms.uFade.value = smoothstep(0.38, 0.78, k);
+        // the scroll may still be running (a hard flick, a long glide): stay with it, so the cut is not followed by another
+        st.u = st.uT;
       }
       if (k >= 1) { st.warp = -1; post.uniforms.uFade.value = 1; }
     } else {

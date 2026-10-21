@@ -50,7 +50,8 @@ export default function Preloader() {
     getLenis()?.stop();
 
     // Readiness signals
-    const onHome = window.location.pathname === "/";
+    // the home page's world and the archive's hero both report when their scene is ready
+    const onHome = window.location.pathname === "/" || window.location.pathname === "/archive";
     if (!onHome) markBoot("scene");
     document.fonts?.ready.then(() => markBoot("fonts"));
     const ready = new Promise<void>((resolve) => {

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { bootStore, useStore } from "@/lib/store";
+import { beatStore } from "@/lib/world-store";
 import { profile } from "@/data/profile";
 import { lerp, smoothstep } from "@/lib/math";
 import Magnetic from "../ui/Magnetic";
@@ -73,6 +74,7 @@ export default function Threshold() {
       if (!moving && !active) gsap.ticker.remove(tick);
     };
     const onMove = (e: PointerEvent) => {
+      if (beatStore.get() !== 0) return; // the name is only on screen in the first beat
       const r = name.getBoundingClientRect();
       const near = e.clientY > r.top - 260 && e.clientY < r.bottom + 120;
       active = near;

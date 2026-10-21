@@ -59,8 +59,8 @@ export type Dawn = {
   group: THREE.Group;
   /** Brightness (0 = unseen). */
   setGain(v: number): void;
-  /** 0 = below the horizon, 1 = well clear of it. */
-  setRise(v: number): void;
+  /** 0 = below the horizon, 1 = well clear of it; `lift` carries it higher still (in sun radii). */
+  setRise(v: number, lift?: number): void;
   update(t: number): void;
   dispose(): void;
 };
@@ -94,8 +94,8 @@ export function createDawn(radius: number): Dawn {
       gain.value = v;
       group.visible = v > 0.003;
     },
-    setRise(v) {
-      sun.position.y = -radius * 0.95 + radius * 1.5 * v;
+    setRise(v, lift = 0) {
+      sun.position.y = -radius * 0.95 + radius * (1.5 + lift) * v;
     },
     update(t) {
       time.value = t;

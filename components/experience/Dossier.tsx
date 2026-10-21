@@ -24,22 +24,30 @@ export default function Dossier() {
   const close = useCallback(() => dossierStore.set(null), []);
 
   /* open and close, keeping the record on screen while the drawer slides away */
+  const locked = useRef(false);
   useEffect(() => {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (want) {
-      if (!open) opener.current = document.activeElement as HTMLElement | null;
+      if (!rec) opener.current = document.activeElement as HTMLElement | null;
       setRec(want);
-      stopScroll();
+      if (!locked.current) {
+        locked.current = true;
+        stopScroll();
+      }
       const id = requestAnimationFrame(() => {
         setOpen(true);
         window.setTimeout(() => closeBtn.current?.focus({ preventScroll: true }), reduced.current ? 0 : 350);
       });
       return () => cancelAnimationFrame(id);
     }
-    if (!open) return;
+    // closed (even before it had finished opening): release the page, give back focus, then drop the record
+    if (!rec && !locked.current) return;
     setOpen(false);
-    startScroll();
-    opener.current?.focus({ preventScroll: true });
+    if (locked.current) {
+      locked.current = false;
+      startScroll();
+      opener.current?.focus({ preventScroll: true });
+    }
     const t = window.setTimeout(() => setRec(null), reduced.current ? 0 : 520);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,7 +64,8 @@ export default function Dossier() {
   }, [pathname]);
   useEffect(
     () => () => {
-      if (dossierStore.get()) startScroll();
+      if (locked.current) startScroll();
+      locked.current = false;
       dossierStore.set(null);
     },
     []
