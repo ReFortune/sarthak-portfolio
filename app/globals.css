@@ -78,7 +78,8 @@ button {
   font: inherit;
   color: inherit;
   background: none;
-  border: 0;
+  /* width only: a button that asks for `border` should draw it (a `border: 0` shorthand also reset the style, so none ever showed) */
+  border-width: 0;
   padding: 0;
   cursor: pointer;
 }
@@ -205,6 +206,19 @@ html.lenis body {
 .rule {
   height: 1px;
   background: rgb(var(--bone) / 0.14);
+}
+
+/* Reachable by keyboard, seen only once it has focus (a "skip to the instrument" button) */
+.until-focus:not(:focus-visible) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0 !important;
 }
 
 /* Instrument corner ticks (8 short lines from one pseudo-element) */
@@ -830,4 +844,105 @@ html[data-booted="1"] .preloader {
   .stack-card .pc-metrics { column-gap: 1.5rem; row-gap: 0.8rem; }
   .stack-card .pc-metrics > div:nth-child(n + 4) { display: none; }
   .stack-card .pc-cta { margin-top: 1.1rem; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   THE WORLD'S LABELS — small mono tags the home page draws at points of the 3-D scene (see experience/Labels.tsx)
+   ────────────────────────────────────────────────────────────────────────── */
+.wl {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.66rem;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(var(--bone) / 0.92);
+  will-change: transform, opacity;
+  text-shadow: 0 0 12px rgb(var(--ink) / 0.9);
+}
+.wl-pin {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgb(var(--laser));
+  background: rgb(var(--ink) / 0.6);
+  transform: rotate(45deg);
+  box-shadow: 0 0 10px rgb(var(--laser) / 0.55);
+}
+.wl-line {
+  flex: none;
+  width: 18px;
+  height: 1px;
+  background: rgb(var(--bone) / 0.45);
+}
+.wl[data-side="right"] { translate: -3.5px -50%; }
+.wl[data-side="left"] { flex-direction: row-reverse; translate: calc(-100% + 3.5px) -50%; }
+.wl[data-side="top"] { flex-direction: column-reverse; translate: -50% calc(-100% + 3.5px); }
+.wl[data-side="top"] .wl-line,
+.wl[data-side="bottom"] .wl-line { width: 1px; height: 10px; }
+.wl[data-side="bottom"] { flex-direction: column; translate: -50% -3.5px; }
+.wl[data-side="left"] .wl-text { padding-right: 0.55rem; }
+.wl[data-side="right"] .wl-text { padding-left: 0.55rem; }
+.wl[data-side="top"] .wl-text { padding-bottom: 0.2rem; }
+.wl[data-side="bottom"] .wl-text { padding-top: 0.2rem; }
+
+/* a heading for a group of stars */
+.wl-cluster { font-size: 0.7rem; letter-spacing: 0.22em; color: rgb(var(--laser)); }
+.wl-cluster .wl-pin,
+.wl-cluster .wl-line { display: none; }
+
+/* a star's name: quieter, no pin */
+.wl-tag.wl-star { color: rgb(var(--bone-dim)); font-size: 0.6rem; letter-spacing: 0.1em; }
+.wl-star .wl-pin,
+.wl-star .wl-line { display: none; }
+.wl-star .wl-text { white-space: normal; max-width: 7.4rem; line-height: 1.25; }
+.wl-star[data-side="left"] .wl-text { text-align: right; }
+.wl-star[data-side="top"] .wl-text,
+.wl-star[data-side="bottom"] .wl-text { text-align: center; }
+.wl-star[data-side="right"] { translate: 12px -50%; }
+.wl-star[data-side="left"] { translate: calc(-100% - 12px) -50%; }
+.wl-star[data-side="top"] { translate: -50% calc(-100% - 10px); }
+.wl-star[data-side="bottom"] { translate: -50% 10px; }
+
+/* a year, over its gate, with what began in it underneath */
+.wl-year {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  translate: -50% -100%;
+  text-align: center;
+  text-transform: none;
+}
+.wl-year .wl-big {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-variation-settings: "wdth" 125, "wght" 650;
+  font-size: clamp(1.5rem, 2.8vw, 2.6rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: rgb(var(--bone));
+}
+.wl-year .wl-items {
+  display: block;
+  white-space: pre-line;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--bone-dim));
+}
+
+/* the dossier: a drawer that carries one record of the archive */
+.dossier-scroll { scrollbar-width: thin; scrollbar-color: rgb(var(--bone) / 0.25) transparent; overscroll-behavior: contain; }
+
+@keyframes scroll-cue {
+  0% { transform: translateY(-100%); }
+  70%, 100% { transform: translateY(300%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="scroll-cue"] { animation: none !important; }
 }

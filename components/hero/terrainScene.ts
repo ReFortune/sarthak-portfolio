@@ -19,12 +19,12 @@ import type { PlanReadout } from "@/lib/store";
      the cloud, with the steep ground it avoids outlined in orange.
    ───────────────────────────────────────────────────────────────────────── */
 
-const BETA = 0.3; // scan-plane pitch below horizontal (rad)
+export const BETA = 0.3; // scan-plane pitch below horizontal (rad)
 const RIG = { camHeight: 6.0, headDrop: 1.45, headAhead: 2.2, pitch: -0.21, speed: 3.4 };
-const TRAIL_N = 40;
-const PING_N = 4;
+export const TRAIL_N = 40;
+export const PING_N = 4;
 
-type LayerSpec = {
+export type LayerSpec = {
   dx: number; // lateral spacing (m)
   dz: number; // along-track row spacing (m)
   zNear: number; // range relative to camera (m)
@@ -35,7 +35,7 @@ type LayerSpec = {
   fade: [number, number, number, number];
 };
 
-const DESKTOP_LAYERS: LayerSpec[] = [
+export const DESKTOP_LAYERS: LayerSpec[] = [
   { dx: 0.06, dz: 0.14, zNear: 2, zFar: 21, xHalf: 11, size: 0.03, seed: 1000, fade: [2, 4.5, 18, 21] },
   { dx: 0.17, dz: 0.4, zNear: 18, zFar: 58, xHalf: 26, size: 0.085, seed: 2000, fade: [18, 23, 50, 58] },
   { dx: 0.46, dz: 1.1, zNear: 50, zFar: 140, xHalf: 62, size: 0.23, seed: 3000, fade: [50, 62, 122, 140] },
@@ -43,7 +43,7 @@ const DESKTOP_LAYERS: LayerSpec[] = [
 ];
 
 /** Scale spacing up (fewer points) for small / low-power screens. */
-function scaleLayers(specs: LayerSpec[], k: number): LayerSpec[] {
+export function scaleLayers(specs: LayerSpec[], k: number): LayerSpec[] {
   return specs.map((s) => ({ ...s, dx: s.dx * k, dz: s.dz * k, size: s.size * Math.sqrt(k) }));
 }
 
@@ -128,7 +128,7 @@ const FRAG = /* glsl */ `
   }
 `;
 
-const FAN_VERT = /* glsl */ `
+export const FAN_VERT = /* glsl */ `
   attribute float aAlpha;
   varying float vA;
   void main() {
@@ -136,14 +136,14 @@ const FAN_VERT = /* glsl */ `
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
-const FAN_FRAG = /* glsl */ `
+export const FAN_FRAG = /* glsl */ `
   uniform vec3 uColor;
   uniform float uIntensity;
   varying float vA;
   void main() { gl_FragColor = vec4(uColor, pow(vA, 3.0) * uIntensity); }
 `;
 
-const STAR_VERT = /* glsl */ `
+export const STAR_VERT = /* glsl */ `
   uniform float uTime, uPx, uGain;
   attribute float aSeed;
   varying float vA;
@@ -154,7 +154,7 @@ const STAR_VERT = /* glsl */ `
     gl_PointSize = (1.3 + aSeed * 1.9) * uPx;
   }
 `;
-const STAR_FRAG = /* glsl */ `
+export const STAR_FRAG = /* glsl */ `
   varying float vA;
   void main() {
     float d = length(gl_PointCoord - 0.5) * 2.0;
@@ -282,7 +282,7 @@ const CON_FRAG = /* glsl */ `
 
 /* ── layer: a ring buffer of rows that follow the camera ─────────────────── */
 
-class Layer {
+export class Layer {
   readonly points: THREE.Points;
   readonly material: THREE.ShaderMaterial;
   private readonly geo = new THREE.BufferGeometry();
@@ -294,6 +294,8 @@ class Layer {
   private readonly slotRow: Int32Array;
   private readonly tmp: [number, number, number] = [0, 0, 0];
   readonly count: number;
+  /** Where the middle of the point field is across the track at world z (the corridor, unless told otherwise). */
+  center: (z: number) => number = corridorX;
 
   constructor(private readonly spec: LayerSpec, shared: Record<string, THREE.IUniform>) {
     this.cols = Math.ceil((spec.xHalf * 2) / spec.dx);
@@ -370,7 +372,7 @@ class Layer {
     const base = slot * cols;
     for (let i = 0; i < cols; i++) {
       const z = (j + hash2(i, j, seed + 1)) * dz;
-      const x = corridorX(z) + (i + hash2(i, j, seed + 2) - cols / 2) * dx;
+      const x = this.center(z) + (i + hash2(i, j, seed + 2) - cols / 2) * dx;
       const y = heightAt(x, z);
       const n = normalAt(x, z, y, Math.max(0.06, dx * 0.7));
 

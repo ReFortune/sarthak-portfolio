@@ -25,7 +25,9 @@ export default function Header() {
   const section = useStore(sectionStore);
   const chapter = useStore(chapterStore);
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  // the home page (the experience) and the archive both hold the ten sections, so the menu scrolls within either
+  const onArchive = pathname === "/archive";
+  const isHome = pathname === "/" || onArchive;
   const { go } = useTransition();
 
   const panel = useRef<HTMLDivElement>(null);
@@ -212,7 +214,7 @@ export default function Header() {
                 <li key={s.id} className="overflow-hidden" onMouseEnter={(e) => scrambleHint(e.currentTarget, s.hint)}>
                   <div data-menu-row>
                     <a
-                      href={s.id === "top" ? "/" : `/#${s.id}`}
+                      href={onArchive ? (s.id === "top" ? "/archive" : `/archive#${s.id}`) : s.id === "top" ? "/" : `/#${s.id}`}
                       onClick={(e) => {
                         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
                         e.preventDefault();
@@ -236,6 +238,17 @@ export default function Header() {
           </nav>
 
           <aside className="flex flex-col justify-end gap-6 sm:gap-10 lg:pb-2">
+            <div data-menu-fade className="space-y-2">
+              <p className="label">View</p>
+              <p className="flex flex-wrap items-center gap-x-6">
+                <TLink href="/" label="Experience" aria-current={!onArchive && isHome ? "page" : undefined} className={`link inline-flex min-h-11 items-center text-lg ${!onArchive && isHome ? "!text-laser" : ""}`}>
+                  Experience
+                </TLink>
+                <TLink href="/archive" label="Archive" aria-current={onArchive ? "page" : undefined} className={`link inline-flex min-h-11 items-center text-lg ${onArchive ? "!text-laser" : ""}`}>
+                  Archive
+                </TLink>
+              </p>
+            </div>
             <div data-menu-fade className="hidden space-y-2 sm:block">
               <p className="label">Open to opportunities</p>
               <p className="lede max-w-sm !text-bone">{profile.seeking}</p>

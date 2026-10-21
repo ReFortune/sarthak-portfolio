@@ -48,7 +48,7 @@ const fmtInt = (n: number) => Math.round(n).toLocaleString("en-US");
 type Settings = { objective: Objective; requireLight: boolean; slopeAware: boolean; algo: Algo; departFrame: number };
 
 /** A route-planning demo: plan, compare, wait for the sun, on a procedural patch of cratered terrain. */
-export default function PlannerVisual() {
+export default function PlannerVisual({ scenario, narrow = false }: { scenario?: Scenario["id"]; /** Lay out as on a phone even on a wide screen (it is in a narrow box). */ narrow?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const area = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -59,7 +59,7 @@ export default function PlannerVisual() {
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
 
-  const first = SCENARIOS[0];
+  const first = SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0];
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [scenarioId, setScenarioId] = useState<Scenario["id"]>(first.id);
@@ -710,7 +710,7 @@ export default function PlannerVisual() {
               )}
 
               {/* overlays (on the map from sm up; a row below it on phones) */}
-              <div className="absolute right-2 top-2 hidden flex-col items-end gap-1.5 sm:flex md:right-3 md:top-3">{overlayButtons}</div>
+              <div className={`absolute right-2 top-2 hidden flex-col items-end gap-1.5 md:right-3 md:top-3 ${narrow ? "" : "sm:flex"}`}>{overlayButtons}</div>
 
               {/* legend */}
               <div className="pointer-events-none absolute bottom-2 left-2 flex flex-wrap items-center gap-x-3 gap-y-1 border border-bone/20 bg-ink/88 px-2.5 py-1.5 backdrop-blur-sm md:bottom-3 md:left-3">
@@ -769,12 +769,12 @@ export default function PlannerVisual() {
         <p className="sr-only" aria-live="polite">{summary}</p>
       </div>
 
-      {ready && <div className="flex items-center gap-2 border-t border-bone/10 px-3 py-2 sm:hidden">{overlayButtons}</div>}
+      {ready && <div className={`flex items-center gap-2 border-t border-bone/10 px-3 py-2 ${narrow ? "" : "sm:hidden"}`}>{overlayButtons}</div>}
 
       {/* ── route dock: stats + the height / sunlight profile ─────────── */}
       <div className="border-t border-bone/10 px-3 py-2.5 md:px-4">
-        <div className="grid items-end gap-x-5 gap-y-2 sm:grid-cols-[auto_1fr]">
-          <dl className="grid grid-cols-3 gap-x-4 gap-y-2 sm:grid-cols-[repeat(6,auto)]">
+        <div className={`grid items-end gap-x-5 gap-y-2 ${narrow ? "" : "sm:grid-cols-[auto_1fr]"}`}>
+          <dl className={`grid grid-cols-3 gap-x-4 gap-y-2 ${narrow ? "" : "sm:grid-cols-[repeat(6,auto)]"}`}>
             {[
               ["Distance", st ? `${fmtInt(st.distance)} m` : "—"],
               ["Trip", st ? fmtDur(st.time) : "—"],
@@ -783,7 +783,7 @@ export default function PlannerVisual() {
               ["Sunlit", st ? `${Math.round(st.sunShare * 100)}%` : "—"],
               ["Explored", result ? fmtInt(result.stats.explored) : "—"],
             ].map(([k, v]) => (
-              <div key={k} className={["Steepest", "Sunlit", "Explored"].includes(k) ? "hidden sm:block" : undefined}>
+              <div key={k} className={!narrow && ["Steepest", "Sunlit", "Explored"].includes(k) ? "hidden sm:block" : undefined}>
                 <dt className="label !text-[0.75rem]">{k}</dt>
                 <dd className={`mono tnum mt-0.5 text-[0.8rem] ${k === "Distance" ? "!text-[0.95rem] text-laser" : "text-bone"}`}>{v}</dd>
               </div>
@@ -842,7 +842,7 @@ export default function PlannerVisual() {
       {/* ── controls ──────────────────────────────────────────────────── */}
       <div className="relative border-t border-bone/10 p-3 md:p-4">
         {advanced && (
-          <div id="planner-advanced" role="group" aria-label="Advanced settings" className="absolute inset-x-3 bottom-full z-30 mb-2 grid gap-x-8 gap-y-4 border border-bone/25 bg-ink/95 p-3 backdrop-blur-md sm:grid-cols-3 md:inset-x-4 md:p-4">
+          <div id="planner-advanced" role="group" aria-label="Advanced settings" className={`absolute inset-x-3 bottom-full z-30 mb-2 grid gap-x-8 gap-y-4 border border-bone/25 bg-ink/95 p-3 backdrop-blur-md md:inset-x-4 md:p-4 ${narrow ? "" : "sm:grid-cols-3"}`}>
             <div>
               <p className="label mb-1.5">Search method</p>
               <div role="group" aria-label="Search method" className="flex gap-2">
@@ -890,7 +890,7 @@ export default function PlannerVisual() {
                 </button>
               ))}
             </div>
-            <p className="label order-3 w-full !normal-case !leading-snug !tracking-normal !text-bone-dim sm:order-none sm:ml-2 sm:w-auto sm:min-w-0 sm:flex-1" aria-live="polite">
+            <p className={`label order-3 w-full !normal-case !leading-snug !tracking-normal !text-bone-dim ${narrow ? "" : "sm:order-none sm:ml-2 sm:w-auto sm:min-w-0 sm:flex-1"}`} aria-live="polite">
               {activeScenario?.note}
             </p>
             <button
@@ -898,7 +898,7 @@ export default function PlannerVisual() {
               aria-expanded={advanced}
               aria-controls="planner-advanced"
               onClick={() => setAdvanced((v) => !v)}
-              className={`${seg(advanced)} ml-auto sm:ml-0`}
+              className={`${seg(advanced)} ml-auto ${narrow ? "" : "sm:ml-0"}`}
             >
               Advanced {advanced ? "−" : "+"}
             </button>
@@ -955,8 +955,8 @@ export default function PlannerVisual() {
           </div>
 
           <p className="label !text-[0.75rem] !normal-case !tracking-normal !text-bone-mute">
-            <span className="sm:hidden">Illustrative demo · synthetic terrain · </span>
-            <span className="hidden sm:inline">
+            <span className={narrow ? "" : "sm:hidden"}>Illustrative demo · synthetic terrain · </span>
+            <span className={narrow ? "hidden" : "hidden sm:inline"}>
               Illustrative demo · synthetic terrain, not mission data · the sun swings far faster than real ·{" "}
             </span>
             {algo === "astar" ? "A*" : "Dijkstra"} planned this in {result ? Math.max(1, Math.round(result.stats.ms)) : "…"} ms

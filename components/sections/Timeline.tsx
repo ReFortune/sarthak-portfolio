@@ -6,30 +6,11 @@ import Reveal from "../ui/Reveal";
 import { gsap } from "@/lib/gsap";
 import { useGsap } from "@/lib/hooks";
 import { timeline, type TimelineKind } from "@/data/timeline";
+import { SPAN, YEARS, NOW_FALLBACK, kindStyle, pct, fmt, nowYear } from "./timelineKit";
 import { projects } from "@/data/projects";
 import { countWord } from "@/lib/format";
 import { education } from "@/data/education";
 import { ymToYear } from "@/lib/math";
-
-const D0 = 2021.5;
-const D1 = 2027.5;
-const SPAN = D1 - D0;
-const YEARS = [2022, 2023, 2024, 2025, 2026, 2027];
-const NOW_FALLBACK = 2026.75;
-
-const kindStyle: Record<TimelineKind, { bar: string; label: string }> = {
-  education: { bar: "bg-bone/15 border border-bone/40", label: "Education" },
-  work: { bar: "bg-laser", label: "Internship" },
-  project: { bar: "bg-ice", label: "Project" },
-  leadership: { bar: "bg-bone/80", label: "Leadership" },
-  research: { bar: "bg-ice", label: "Research" },
-};
-
-const pct = (y: number) => `${(((y - D0) / SPAN) * 100).toFixed(3)}%`;
-const fmt = (ym: string) => {
-  const [y, m] = ym.split("-").map(Number);
-  return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]} ${y}`;
-};
 
 export default function Timeline() {
   const root = useRef<HTMLDivElement>(null);
@@ -37,8 +18,7 @@ export default function Timeline() {
   const [hover, setHover] = useState<string | null>(null);
 
   useEffect(() => {
-    const d = new Date();
-    setNow(Math.min(D1 - 0.05, d.getFullYear() + d.getMonth() / 12 + d.getDate() / 365));
+    setNow(nowYear());
   }, []);
 
   useGsap(root, ({ motion }) => {

@@ -15,7 +15,7 @@ const ROOMS = [
 ] as const;
 const BRANCH_X = 230;
 
-export default function ChironVisual() {
+export default function ChironVisual({ stacked = false }: { stacked?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const robot = useRef<SVGGElement>(null);
   const state = useRef<HTMLSpanElement>(null);
@@ -83,9 +83,9 @@ export default function ChironVisual() {
   }, []);
 
   return (
-    <div ref={root} className="absolute inset-0 grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] sm:grid-cols-[1.18fr_1fr] sm:grid-rows-1">
+    <div ref={root} className={stacked ? "relative flex flex-col" : "absolute inset-0 grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] sm:grid-cols-[1.18fr_1fr] sm:grid-rows-1"}>
       {/* ── the real prototype + budget ── */}
-      <div className="flex flex-col border-b border-bone/10 bg-ink sm:min-h-0 sm:border-b-0 sm:border-r">
+      <div className={`flex flex-col border-bone/10 bg-ink ${stacked ? "order-2 border-t" : "border-b sm:min-h-0 sm:border-b-0 sm:border-r"}`}>
         <figure className="p-3 md:p-4">
           <div className="paper-fig relative aspect-[1362/1000] w-full">
             <Image
@@ -124,8 +124,8 @@ export default function ChironVisual() {
       </div>
 
       {/* ── navigation logic ── */}
-      <div className="flex flex-col bg-ink sm:min-h-0">
-        <div className="relative min-h-[22.5rem] flex-1 p-3 sm:min-h-[17rem] md:p-4" data-cursor="default">
+      <div className={`flex flex-col bg-ink ${stacked ? "order-1" : "sm:min-h-0"}`}>
+        <div className={`relative flex-1 p-3 md:p-4 ${stacked ? "min-h-[24rem]" : "min-h-[22.5rem] sm:min-h-[17rem]"}`} data-cursor="default">
           <p className="label label-strong">Corridor logic · from the flowchart</p>
           <svg
             viewBox="0 0 330 322"

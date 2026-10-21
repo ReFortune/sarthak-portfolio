@@ -13,7 +13,7 @@ import { sections } from "@/data/profile";
  */
 export default function Hud() {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isHome = pathname === "/" || pathname === "/archive";
   const section = useStore(sectionStore);
   const chapter = useStore(chapterStore);
   const bar = useRef<HTMLSpanElement>(null);

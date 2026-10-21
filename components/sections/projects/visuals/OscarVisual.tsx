@@ -52,7 +52,7 @@ function colormap(t: number, out: Uint8ClampedArray, o: number, dim: number) {
 
 const GW = 168, GH = 120;
 
-export default function OscarVisual() {
+export default function OscarVisual({ stacked = false }: { stacked?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const sceneCv = useRef<HTMLCanvasElement>(null);
   const specCv = useRef<HTMLCanvasElement>(null);
@@ -251,7 +251,7 @@ export default function OscarVisual() {
   }, []);
 
   return (
-    <div ref={root} className="absolute inset-0 grid grid-rows-[1fr_1.25fr] gap-px bg-bone/10 sm:grid-cols-[1.05fr_1fr] sm:grid-rows-1">
+    <div ref={root} className={`absolute inset-0 grid grid-rows-[1fr_1.25fr] gap-px bg-bone/10 ${stacked ? "" : "sm:grid-cols-[1.05fr_1fr] sm:grid-rows-1"}`}>
       <div className="relative bg-ink" data-cursor="scan">
         <canvas ref={sceneCv} className="absolute inset-0 h-full w-full" aria-label="Simulated chlorophyll field swept by a pushbroom spectrometer slit" role="img" />
         <div className="pointer-events-none absolute left-4 top-4">

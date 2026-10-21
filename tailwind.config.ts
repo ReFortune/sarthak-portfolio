@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 /** Colour tokens are CSS variables (see app/globals.css) so alpha modifiers like `bg-ink/60` keep working. */
 const channel = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
@@ -37,6 +38,10 @@ const config: Config = {
       screens: { xs: "480px" },
     },
   },
-  plugins: [],
+  plugins: [
+    // `dock:` is the wide layout, where an instrument panel sits beside the world (the same query as `DOCK_QUERY` in the story table).
+    // (A variant, not an object-valued screen: those switch off `min-*` and `max-*` for the whole site.)
+    plugin(({ addVariant }) => addVariant("dock", "@media (min-width: 1000px) and (min-aspect-ratio: 6/5) and (min-height: 500px)")),
+  ],
 };
 export default config;
