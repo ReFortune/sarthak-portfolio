@@ -32,7 +32,6 @@ export type Instrument = {
   bare?: boolean;
   /** Docked, how wide it is (the default is the shared panel width). */
   width?: string;
-  Body: LazyExoticComponent<ComponentType>;
 };
 
 type Loader = () => Promise<{ default: ComponentType }>;
@@ -55,16 +54,24 @@ const loaders: Record<PanelId, Loader> = {
   path: () => import("./panels/TimelinePanel"),
 };
 
-const bodies = Object.fromEntries((Object.keys(loaders) as PanelId[]).map((id) => [id, lazy(loaders[id])])) as Record<PanelId, LazyExoticComponent<ComponentType>>;
+const bodies: Partial<Record<PanelId, LazyExoticComponent<ComponentType>>> = {};
+
+/** The component for an instrument, made the first time it is asked for. */
+export const bodyOf = (id: PanelId) => (bodies[id] ??= lazy(loaders[id]));
+
+/** Forget a body whose code failed to load, so that asking again tries again. */
+export const resetBody = (id: PanelId) => {
+  delete bodies[id];
+};
 
 /** Start fetching a panel's code (a no-op if it has been). */
 export function preload(id: PanelId | null) {
-  if (id) void loaders[id]();
+  if (id) loaders[id]().catch(() => {});
 }
 
 const T = { fine: "", coarse: "" };
 
-const list: Omit<Instrument, "Body">[] = [
+const list: Instrument[] = [
   {
     id: "scan",
     fig: "Live",
@@ -185,10 +192,10 @@ const list: Omit<Instrument, "Body">[] = [
     id: "path",
     fig: "Timeline",
     title: "Mission timeline",
-    size: { fill: 30 },
+    size: { fill: 34 },
     what: `Everything on one axis: study, two internships, two design teams, ${countWord(projects.length)} projects and a research paper, overlapping the way real schedules do. The lines beside the route are the same rows.`,
     hint: { fine: "Hover a row to light it up · click to open it", coarse: "Tap a row to open it" },
   },
 ];
 
-export const instruments: Record<PanelId, Instrument> = Object.fromEntries(list.map((i) => [i.id, { ...i, Body: bodies[i.id] }])) as Record<PanelId, Instrument>;
+export const instruments = Object.fromEntries(list.map((i) => [i.id, i])) as Record<PanelId, Instrument>;

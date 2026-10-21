@@ -41,8 +41,8 @@ export type Telemetry = {
   slope: number;
   /** Metres to the next gate, or null past the last one on the plain. */
   nextGate: number | null;
-  /** Simulated returns gathered so far at the given scan rate (Hz) and points per scan. */
-  points(hz: number, perScan: number): number;
+  /** Simulated returns gathered per metre driven, at the given scan rate (Hz) and points per scan. */
+  pointsPerMetre(hz: number, perScan: number): number;
   /** What the planner reported for the route. */
   plan: { length: number; maxSlope: number; limit: number; ms: number };
 };
@@ -657,7 +657,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
         elevation: heightAt(tp.x, tp.z),
         slope,
         nextGate: next === null ? null : next - s,
-        points: (hz, perScan) => s * (hz * perScan) / ROVER_SPEED,
+        pointsPerMetre: (hz, perScan) => (hz * perScan) / ROVER_SPEED,
         plan: layout.route.readout,
       };
     },

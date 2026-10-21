@@ -107,8 +107,8 @@ with the live thing from the long-form site: the pushbroom trade study's sliders
 team growth, the transit scrubber, the skills, the timeline. They are the archive's own components (a few take a `stacked`, `compact` or `narrow` prop to fit a narrower box), fetched when the story gets near their stop and
 dropped when it moves on. `PANEL_DEFS` in `story.ts` says over which stretch each is on show. Three things tie them to the world: on a wide screen the picture *makes room* (`world.setDock`: a wider view, aimed high, shifted
 so it is centred in what the panel leaves, with the words low on the left); pointing at something in the panel lights it up in the world (`world.setFocus`: a skills group's stars, a timeline row's line along the route); and the first
-three stops show the rover's own readouts (`world.telemetry()`: distance, elevation, slope, the next gate, the points gathered, what the planner said). A panel can be folded away or opened large. On a screen too narrow to dock it
-(the `dock:` screen in `tailwind.config.ts` and `DOCK_QUERY` are the same query), a bar at the foot opens it as a sheet over the world, which pauses while it is open. Each stop's words carry a keyboard-only "Use the
+two stops show the rover's own readouts (`world.telemetry()`: distance, elevation, slope, the next gate, the points gathered, what the planner said). A panel can be folded away or opened large (in place: the same instrument, nothing lost); the second stop's panel is the About card. On a screen too narrow to dock it
+(the `dock:` variant in `tailwind.config.ts` and `DOCK_QUERY` are the same query), a bar at the foot opens it as a sheet over the world, which pauses while it is open. Each stop's words carry a keyboard-only "Use the
 instrument" button, since the panel sits apart from them in the page.
 
 **Drawing.** Everything is additive point sprites (`kit/sculpt.ts` samples points over surfaces and shares one shader with the rover and the gates, whose "laser line builds it" effect is that shader's `uBuilt`). Solid things carry a dark

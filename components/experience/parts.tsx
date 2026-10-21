@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { dockStore, dossierStore, foldStore, sheetStore, type DossierRef } from "@/lib/world-store";
+import { dockStore, dossierStore, foldStore, type DossierRef } from "@/lib/world-store";
+import { openSheet } from "./sheet";
 
 /* Small pieces the beats are made of, in the site's own idiom: mono labels, expanded display type, a serif italic. */
 
@@ -76,7 +77,7 @@ export function Copy({
  */
 export function PanelLink() {
   const go = () => {
-    if (!dockStore.get()) return sheetStore.set(true);
+    if (!dockStore.get()) return openSheet();
     foldStore.set(false);
     // (after it has had a moment to show itself, if it was folded away)
     window.setTimeout(() => {

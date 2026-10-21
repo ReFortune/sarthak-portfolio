@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { timeline, type TimelineKind, type TimelineRow } from "@/data/timeline";
 import { ymToYear } from "@/lib/math";
 import { dossierStore, focusStore, sheetStore, type DossierRef } from "@/lib/world-store";
-import { D0, SPAN, YEARS, fmt, kindStyle, nowYear, pct } from "../../sections/timelineKit";
+import { NOW_FALLBACK, SPAN, YEARS, fmt, kindStyle, nowYear, pct } from "../../sections/timelineKit";
 
 /** What a row opens in the dossier. */
 const recordOf = (r: TimelineRow): DossierRef =>
@@ -12,7 +12,7 @@ const recordOf = (r: TimelineRow): DossierRef =>
 
 /** The timeline as rows on one axis. Point at a row and the same line lights up beside the route in the world. */
 export default function TimelinePanel() {
-  const [now, setNow] = useState(2026.75);
+  const [now, setNow] = useState(NOW_FALLBACK);
   const [hover, setHover] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -50,7 +50,7 @@ export default function TimelinePanel() {
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[34%] right-5">
           {YEARS.map((y) => (
             <span key={y} className="absolute inset-y-0 w-px bg-bone/[0.07]" style={{ left: pct(y) }} />

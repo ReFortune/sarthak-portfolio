@@ -6,7 +6,7 @@ import Reveal from "../ui/Reveal";
 import { gsap } from "@/lib/gsap";
 import { useGsap } from "@/lib/hooks";
 import { timeline, type TimelineKind } from "@/data/timeline";
-import { D0, D1, SPAN, YEARS, NOW_FALLBACK, kindStyle, pct, fmt, nowYear } from "./timelineKit";
+import { SPAN, YEARS, NOW_FALLBACK, kindStyle, pct, fmt, nowYear } from "./timelineKit";
 import { projects } from "@/data/projects";
 import { countWord } from "@/lib/format";
 import { education } from "@/data/education";

@@ -13,6 +13,7 @@ import Rail from "./Rail";
 import Dossier from "./Dossier";
 import Panel from "./Panel";
 import { preload } from "./instruments";
+import { panelInset } from "./panelGeometry";
 
 declare global {
   interface Window {
@@ -121,9 +122,8 @@ export default function Experience() {
     if (!s) return;
     const push = () => {
       const w = s.clientWidth || 1;
-      const panelW = Math.min(672, Math.max(416, 0.38 * w)); // clamp(26rem, 38vw, 42rem)
-      // the panel, its margin at the right and a gap before it
-      worldRef.current?.setDock(dockStore.get() && !foldStore.get(), (56 + panelW + 24) / w);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      worldRef.current?.setDock(dockStore.get() && !foldStore.get(), panelInset(w, rem));
     };
     dockSync.current = push;
     push();
@@ -133,6 +133,11 @@ export default function Experience() {
     return () => {
       off.forEach((f) => f());
       ro.disconnect();
+      // (these are module-level: leaving the page must not leave a sheet "open", or an instrument "on show", for the next visit)
+      sheetStore.set(false);
+      panelStore.set(null);
+      panelEnv.set(0);
+      focusStore.set(null);
     };
   }, []);
 

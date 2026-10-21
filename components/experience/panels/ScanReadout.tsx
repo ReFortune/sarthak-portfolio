@@ -53,18 +53,25 @@ export default function ScanReadout() {
       const c = cells.get(k);
       if (c && c.textContent !== v) c.textContent = v;
     };
-    const t0 = performance.now();
-    let last = 0;
+    // what the sensor has gathered adds up: each tick, the ground covered since the last at the configuration in use, and the time passed
+    // (it keeps sampling when the rover stops), so changing the configuration changes the rate and never the total
+    let acc = 0, last = 0, lastNow = performance.now(), lastDistance: number | null = null;
     let raf = 0;
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
       if (document.hidden || now - last < 100) return;
       last = now;
+      const dt = Math.min(0.5, (now - lastNow) / 1000);
+      lastNow = now;
       const t = worldApi.telemetry();
       const { rate, inc } = modeRef.current;
-      // the sensor keeps sampling when the rover stops, so the count never sits still
-      const gathered = (t ? t.points(rate, perScan(inc)) : 0) + ((now - t0) / 1000) * rate * perScan(inc);
-      put("points", Math.floor(gathered).toLocaleString("en-US"));
+      const perSecond = rate * perScan(inc);
+      acc += dt * perSecond;
+      if (t) {
+        if (lastDistance !== null) acc += Math.max(0, t.distance - lastDistance) * t.pointsPerMetre(rate, perScan(inc));
+        lastDistance = t.distance;
+      }
+      put("points", Math.floor(acc).toLocaleString("en-US"));
       if (!t) return;
       put("distance", `${Math.round(t.distance)} m`);
       put("elevation", `${t.elevation >= 0 ? "+" : "−"}${Math.abs(t.elevation).toFixed(1)} m`);

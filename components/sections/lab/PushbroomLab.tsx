@@ -29,8 +29,10 @@ function analytic(p: LabParams) {
 const chip = (n: number) =>
   n >= 15 ? { t: "Resolved", c: "border-ice/60 text-ice" } : n >= 6 ? { t: "Marginal", c: "border-bone/50 text-bone" } : { t: "Missed", c: "border-laser/70 text-laser" };
 
-export default function PushbroomLab({ variant = "page" }: { variant?: "page" | "panel" }) {
-  const panel = variant === "panel";
+export default function PushbroomLab({ variant = "page" }: { variant?: "page" | "panel" | "wide" }) {
+  /** Inside the home page's instrument panel (`wide`: that panel opened large). */
+  const panel = variant !== "page";
+  const wide = variant === "wide";
   const wrap = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
   const labelHost = useRef<HTMLDivElement>(null);
@@ -128,14 +130,14 @@ export default function PushbroomLab({ variant = "page" }: { variant?: "page" | 
         </div>
       )}
 
-      <div className={panel ? "grid" : "grid lg:grid-cols-[1.55fr_1fr]"}>
+      <div className={wide ? "grid grid-cols-[1.2fr_1fr]" : panel ? "grid" : "grid lg:grid-cols-[1.55fr_1fr]"}>
         {/* ── viewport ─────────────────────────────────────────── */}
-        <div className={`relative border-b border-bone/10 ${panel ? "h-[clamp(11rem,26svh,17rem)]" : "min-h-[26rem] lg:min-h-[36rem] lg:border-b-0 lg:border-r"}`}>
+        <div className={`relative border-b border-bone/10 ${wide ? "min-h-[24rem] border-b-0 border-r" : panel ? "h-[clamp(11rem,26svh,17rem)]" : "min-h-[26rem] lg:min-h-[36rem] lg:border-b-0 lg:border-r"}`}>
           <div ref={canvasHost} className="absolute inset-0 bg-ink-2" />
           <div ref={labelHost} className="pointer-events-none absolute inset-0 overflow-hidden" />
           {!supported && (
             <p className="label absolute inset-0 grid place-items-center px-8 text-center">
-              WebGL is unavailable in this browser. The readouts on the right still update.
+              WebGL is unavailable in this browser. The readouts {panel ? "below" : "on the right"} still update.
             </p>
           )}
           {panel && (
@@ -168,7 +170,7 @@ export default function PushbroomLab({ variant = "page" }: { variant?: "page" | 
         {/* ── controls ─────────────────────────────────────────── */}
         <div className={panel ? "space-y-4 p-4" : "space-y-6 p-4 md:p-6"}>
           <fieldset>
-            <legend className="label mb-2.5">Trade space · scan rate × angular increment</legend>
+            <legend className={`label ${panel ? "mb-2.5" : "mb-3"}`}>Trade space · scan rate × angular increment</legend>
             <div className={`grid gap-2 ${panel ? "grid-cols-4" : "grid-cols-2"}`}>
               {PRESETS.map((p, i) => (
                 <button
@@ -181,7 +183,7 @@ export default function PushbroomLab({ variant = "page" }: { variant?: "page" | 
                   }`}
                 >
                   <span className={`h-display block leading-none ${panel ? "text-[1.05rem]" : "text-[1.35rem]"}`}>{p.rate} Hz</span>
-                  <span className="label mt-1 block !text-[0.68rem]">{p.inc.toFixed(2)}°{panel ? "" : " increment"}</span>
+                  <span className={`label mt-1 block ${panel ? "!text-[0.68rem]" : ""}`}>{p.inc.toFixed(2)}°{panel ? "" : " increment"}</span>
                 </button>
               ))}
             </div>

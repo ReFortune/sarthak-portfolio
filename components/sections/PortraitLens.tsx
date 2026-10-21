@@ -61,7 +61,7 @@ export default function PortraitLens({ src, alt }: { src: string; alt: string })
     const img = new window.Image();
     img.onload = () => !cancelled && draw(img);
     img.src = src;
-    const ro = new ResizeObserver(() => img.complete && draw(img));
+    const ro = new ResizeObserver(() => img.complete && img.naturalWidth > 0 && draw(img));
     ro.observe(el);
 
     /* lens */

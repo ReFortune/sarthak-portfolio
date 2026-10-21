@@ -32,12 +32,13 @@ export function createConstellation(ctx: ClusterContext): Cluster {
   STARS.forEach((s, i) => pos.set(s.id, place(s, (hash2(i, 1, 913) - 0.5) * 14)));
   const primary = (s: Star): RGB => (s.clusters.length > 1 ? TONE.bone : COLOUR[s.clusters[0]]);
 
-  /* the stars: a hot core, a halo and a small cross; one part for each group, so a group can be lit on its own */
+  /* the stars: a hot core, a halo and a small cross. One part for each group, so a group can be lit on its own, and one for the stars
+     that belong to two (they are lit by either) */
   const groups = skillClusters.map((c) => c.id);
-  const starParts = groups.map((cid, g) =>
-    S.part(11 + g, (b) => {
+  const starsOf = (pick: (s: Star) => boolean, salt: number) =>
+    S.part(salt, (b) => {
       STARS.forEach((s, i) => {
-        if (s.clusters[0] !== cid) return;
+        if (!pick(s)) return;
         const [x, y, z] = pos.get(s.id)!;
         const c = primary(s);
         const p = s.x / 1000;
@@ -48,8 +49,9 @@ export function createConstellation(ctx: ClusterContext): Cluster {
         }
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let k = 1; k <= 3; k++) b.point(x + dx * k * 0.7, y + dy * k * 0.7, z, c, { tone: 1.3 - k * 0.3, param: p });
       });
-    }, { size: 0.55 })
-  );
+    }, { size: 0.55 });
+  const starParts = groups.map((cid, g) => starsOf((s) => s.clusters.length === 1 && s.clusters[0] === cid, 11 + g));
+  const sharedPart = starsOf((s) => s.clusters.length > 1, 19);
 
   /* the dust of the field */
   S.part(2, (b) => {
@@ -93,7 +95,7 @@ export function createConstellation(ctx: ClusterContext): Cluster {
   let focus: string | null = null;
 
   const v = new THREE.Vector3();
-  const dust = S.parts[groups.length];
+  const dust = S.parts[groups.length + 1];
   return {
     group,
     update(f, _a, gain) {
@@ -112,6 +114,9 @@ export function createConstellation(ctx: ClusterContext): Cluster {
         starParts[g].built.value = (p + 0.16) / 1.3 + 0.002;
         starParts[g].mul = m;
       });
+      // a star in two groups is as bright as the brighter of them
+      sharedPart.built.value = (p + 0.16) / 1.3 + 0.002;
+      sharedPart.mul = Math.max(...groups.map((cid) => mult.get(cid)!));
       for (const s of lineSets) {
         s.l.geo.setDrawRange(0, Math.floor(s.n * clamp(e * 1.05)) * 2);
         s.l.mat.opacity = 0.7 * gain * clamp(mult.get(s.id) ?? 1, 0, 1.5);
